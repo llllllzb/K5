@@ -536,13 +536,13 @@ void portGpioSetDefCfg(void)
 **************************************************/
 void portModuleGpioCfg(void)
 {
-    GPIOB_ModeCfg(POWER_PIN, GPIO_ModeOut_PP_5mA);
-    GPIOB_ModeCfg(POWER_SUPPLY_PIN, GPIO_ModeOut_PP_5mA);
+    GPIOA_ModeCfg(POWER_PIN, GPIO_ModeOut_PP_5mA);
+    GPIOA_ModeCfg(RST_PIN, GPIO_ModeOut_PP_5mA);
     GPIOA_ModeCfg(DTR_PIN, GPIO_ModeOut_PP_5mA);
 
     PORT_POWER_SUPPLY_OFF;
     PORT_PWRKEY_H;
-    PORT_RSTKEY_L;
+    PORT_RSTKEY_H;
 }
 
 /**************************************************
@@ -553,7 +553,7 @@ void portModuleGpioCfg(void)
 **************************************************/
 void portLedCfg(void)
 {
-    GPIOB_ModeCfg(LED1_PIN, GPIO_ModeOut_PP_5mA);
+    GPIOA_ModeCfg(LED1_PIN, GPIO_ModeOut_PP_5mA);
     LED1_OFF;
 }
 /**

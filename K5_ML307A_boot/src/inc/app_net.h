@@ -32,6 +32,27 @@ typedef enum
     CFUN_CMD,
     QICLOSE_CMD,
     CGDCONT_CMD,
+
+    //ÖÐÒÆ
+    CGATT_CMD,
+    CGACT_CMD,
+    MIPOPEN_CMD,
+    MIPCLOSE_CMD,
+    MIPSEND_CMD,
+    MIPRD_CMD,
+    MIPSACK_CMD,
+    MADC_CMD,
+    MLPMCFG_CMD,
+    MLBSCFG_CMD,
+    MLBSLOC_CMD,
+    CMGL_CMD,
+    MWIFISCANSTART_CMD,
+    MWIFISCANSTOP_CMD,
+    MCHIPINFO_CMD,
+    MCFG_CMD,
+    AUTHREQ_CMD,
+    MIPCALL_CMD,
+
 } atCmdType_e;
 
 

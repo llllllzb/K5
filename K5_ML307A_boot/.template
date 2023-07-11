@@ -14,4 +14,4 @@ Description=ROM(byte): 448K, SRAM(byte): 32K, CHIP PINS: 28, GPIO PORTS: 20.\nCH
 PeripheralVersion=1.1
 
 MCU=CH582F
-Target Path=obj/zt09_boot.hex
+Target Path=obj/G3N_boot.hex

@@ -98,9 +98,9 @@ void LogMessage(uint8_t level, char *debug)
 
     portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
     sprintf(timedebug, "[%02d:%02d:%02d] ", hour, minute, second);
-    portUartSend(&usart0_ctl, (uint8_t *)timedebug, strlen(timedebug));
-    portUartSend(&usart0_ctl, (uint8_t *)debug, strlen(debug));
-    portUartSend(&usart0_ctl, (uint8_t *)"\r\n", 2);
+    portUartSend(&usart2_ctl, (uint8_t *)timedebug, strlen(timedebug));
+    portUartSend(&usart2_ctl, (uint8_t *)debug, strlen(debug));
+    portUartSend(&usart2_ctl, (uint8_t *)"\r\n", 2);
 }
 
 /**************************************************
@@ -120,9 +120,9 @@ void LogMessageWL(uint8_t level, char *buf, uint16_t len)
 
     portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
     sprintf(timedebug, "[%02d:%02d:%02d] ", hour, minute, second);
-    portUartSend(&usart0_ctl, (uint8_t *)timedebug, strlen(timedebug));
-    portUartSend(&usart0_ctl, (uint8_t *)buf, len);
-    portUartSend(&usart0_ctl, (uint8_t *)"\r\n", 2);
+    portUartSend(&usart2_ctl, (uint8_t *)timedebug, strlen(timedebug));
+    portUartSend(&usart2_ctl, (uint8_t *)buf, len);
+    portUartSend(&usart2_ctl, (uint8_t *)"\r\n", 2);
 }
 
 /**************************************************
@@ -304,3 +304,74 @@ void byteToHexString(uint8_t *src, uint8_t *dest, uint16_t srclen)
     }
 
 }
+
+/*------------------------------------------------------*/
+
+void stringToItem(ITEM *item, uint8_t *str, uint16_t len)
+{
+    uint16_t i, data_len;
+    char debug[50];
+    item->item_cnt = 0;
+    data_len = 0;
+    //逗号分隔
+    memset(item, 0, sizeof(ITEM));
+    for (i = 0; i < ITEMCNTMAX; i++)
+    {
+        item->item_data[i][0] = 0;
+    }
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] == ',' || str[i] == '#' || str[i] == '\r' || str[i] == '\n' || str[i] == '=')
+        {
+            if (item->item_data[item->item_cnt][0] != 0)
+            {
+                item->item_cnt++;
+                data_len = 0;
+                if (item->item_cnt >= ITEMCNTMAX)
+                {
+                    break; ;
+                }
+            }
+        }
+        else
+        {
+            item->item_data[item->item_cnt][data_len] = str[i];
+            data_len++;
+            if (i + 1 == len)
+            {
+                item->item_cnt++;
+            }
+            if (data_len >= ITEMSIZEMAX)
+            {
+                return ;
+            }
+            item->item_data[item->item_cnt][data_len] = 0;
+        }
+    }
+    snprintf(debug, 50, "Item cnt=%d", item->item_cnt);
+    LogMessage(DEBUG_ALL, debug);
+
+}
+
+/*------------------------------------------------------*/
+//获取字符ch出现在str中的n个位置的索引
+int getCharIndexWithNum(uint8_t *src, uint16_t src_len, uint8_t ch, uint8_t num)
+{
+    int i, count = 0;
+    if (src == NULL)
+        return -1;
+    for (i = 0; i < src_len; i++)
+    {
+        if (src[i] == ch)
+        {
+            ++count;
+            if (count == num)
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+

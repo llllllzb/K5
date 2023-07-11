@@ -1053,10 +1053,11 @@ uint32_t portGetTimestamp(void)
     day = R32_RTC_CNT_DAY & 0x3FFF;
     sec2 = R16_RTC_CNT_2S; 
     
-    t32k = RTC_GetCycle32k();
+    t32k = RTC_GetCycle32k();						//获取当前32K的振荡周期
 
-    t = day*86400+(sec2<<1) + ((t32k<0x8000)?0:1);
-
+    t = day*86400+(sec2<<1) + ((t32k<0x8000)?0:1);	//这一步是把当前运行的RTC时间全部转换为以1S为单位
+    												//sec2<<1 等价于sec2*2
+    												//0x8000等于32768, t32k>0x8000表示振荡周期已经满1s
     t += portGetRtcOffset();
 
     return t;

@@ -22,11 +22,20 @@
 
 #define NORMAL_LINK             0
 
+#define ITEMCNTMAX	8
+#define ITEMSIZEMAX	60
+
+
 typedef struct{
     uint8_t logLevel;
 
 }sysinfo_s;
 
+typedef struct
+{
+    unsigned char item_cnt;
+    char item_data[ITEMCNTMAX][ITEMSIZEMAX];
+} ITEM;
 
 unsigned short GetCrc16(const char *pData, int nLength);
 
@@ -42,5 +51,7 @@ int my_strstr(char *str1, const char *str2, int len);
 int distinguishOK(char *buf);
 int getCharIndexWithNum(uint8_t *src, uint16_t src_len, uint8_t ch, uint8_t num);
 void byteToHexString(uint8_t *src, uint8_t *dest, uint16_t srclen);
+void stringToItem(ITEM *item, uint8_t *str, uint16_t len);
+
 
 #endif /* SRC_INC_APP_SYS_H_ */

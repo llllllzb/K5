@@ -1,4 +1,5 @@
 ################################################################################
+# MRS Version: {"version":"1.8.5","date":"2023/05/22"}
 # Automatically-generated file. Do not edit!
 ################################################################################
 
@@ -37,34 +38,34 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 SECONDARY_FLASH += \
-zt09_boot.hex \
+K5_boot.hex \
 
 SECONDARY_LIST += \
-zt09_boot.lst \
+K5_boot.lst \
 
 SECONDARY_SIZE += \
-zt09_boot.siz \
+K5_boot.siz \
 
 
 # All Target
-all: zt09_boot.elf secondary-outputs
+all: K5_boot.elf secondary-outputs
 
 # Tool invocations
-zt09_boot.elf: $(OBJS) $(USER_OBJS)
-	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"zt09_boot.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "zt09_boot.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+K5_boot.elf: $(OBJS) $(USER_OBJS)
+	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"K5_boot.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "K5_boot.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
-zt09_boot.hex: zt09_boot.elf
-	@	riscv-none-embed-objcopy -O ihex "zt09_boot.elf"  "zt09_boot.hex"
+K5_boot.hex: K5_boot.elf
+	@	riscv-none-embed-objcopy -O ihex "K5_boot.elf"  "K5_boot.hex"
 	@	@
-zt09_boot.lst: zt09_boot.elf
-	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "zt09_boot.elf" > "zt09_boot.lst"
+K5_boot.lst: K5_boot.elf
+	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "K5_boot.elf" > "K5_boot.lst"
 	@	@
-zt09_boot.siz: zt09_boot.elf
-	@	riscv-none-embed-size --format=berkeley "zt09_boot.elf"
+K5_boot.siz: K5_boot.elf
+	@	riscv-none-embed-size --format=berkeley "K5_boot.elf"
 	@	@
 # Other Targets
 clean:
-	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) zt09_boot.elf
+	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) K5_boot.elf
 	-@
 secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
 

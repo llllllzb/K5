@@ -49,7 +49,7 @@ int main(void)
     CH58X_BLEInit();
     HAL_Init();
     //appPeripheralInit();
-    appCentralInit();
+    //appCentralInit();
     myTaskInit();
     Main_Circulation();
 }

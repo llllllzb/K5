@@ -10,33 +10,35 @@
 
 #include  "CH58x_common.h"
 
-#define APPUSART0_BUFF_SIZE 128
+#define APPUSART0_BUFF_SIZE 768
 #define APPUSART1_BUFF_SIZE 10
-#define APPUSART2_BUFF_SIZE 10
-#define APPUSART3_BUFF_SIZE 768
+#define APPUSART2_BUFF_SIZE 128
+#define APPUSART3_BUFF_SIZE 10
 
 
 //4GÄ£×éÉæ¼°IO
-#define POWER_SUPPLY_PIN            GPIO_Pin_13
-#define PORT_POWER_SUPPLY_ON        GPIOB_SetBits(POWER_SUPPLY_PIN)
-#define PORT_POWER_SUPPLY_OFF       GPIOB_ResetBits(POWER_SUPPLY_PIN)
+#define POWER_SUPPLY_PIN
+#define PORT_POWER_SUPPLY_ON
+#define PORT_POWER_SUPPLY_OFF
 
-#define POWER_PIN                   GPIO_Pin_23
-#define PORT_PWRKEY_H               GPIOB_ResetBits(POWER_PIN)
-#define PORT_PWRKEY_L               GPIOB_SetBits(POWER_PIN)
+#define POWER_PIN       GPIO_Pin_15     //PA15
+#define PORT_PWRKEY_H   GPIOA_ResetBits(POWER_PIN)
+#define PORT_PWRKEY_L   GPIOA_SetBits(POWER_PIN)
 
-#define RST_PIN
-#define PORT_RSTKEY_H
-#define PORT_RSTKEY_L
+#define RST_PIN         GPIO_Pin_14     //PA14
+#define PORT_RSTKEY_H   GPIOA_ResetBits(RST_PIN)
+#define PORT_RSTKEY_L   GPIOA_SetBits(RST_PIN)
 
 
-#define DTR_PIN                     GPIO_Pin_15
-#define DTR_HIGH                    GPIOA_SetBits(DTR_PIN)
-#define DTR_LOW                     GPIOA_ResetBits(DTR_PIN)
+#define RING_PIN        GPIO_Pin_13     //PA13
 
-#define LED1_PIN        			GPIO_Pin_10
-#define LED1_ON         			GPIOB_SetBits(LED1_PIN)
-#define LED1_OFF       				GPIOB_ResetBits(LED1_PIN)
+#define DTR_PIN         GPIO_Pin_12     //PA12
+#define DTR_HIGH        GPIOA_SetBits(DTR_PIN)
+#define DTR_LOW         GPIOA_ResetBits(DTR_PIN)
+
+#define LED1_PIN        GPIO_Pin_11     //PA11
+#define LED1_ON         GPIOA_SetBits(LED1_PIN)
+#define LED1_OFF        GPIOA_ResetBits(LED1_PIN)
 
 
 

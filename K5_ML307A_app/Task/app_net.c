@@ -349,7 +349,7 @@ static void modulePressReleaseKey(void)
 static void modulePressPowerKey(void)
 {
     PWRKEY_LOW;
-    startTimer(20, modulePressReleaseKey, 0);
+    startTimer(25, modulePressReleaseKey, 0);
 }
 /**************************************************
 @bref		模组开机
@@ -363,7 +363,7 @@ void modulePowerOn(void)
     LogMessage(DEBUG_ALL, "modulePowerOn");
     moduleInit();
     sysinfo.moduleRstFlag = 1;
-    portUartCfg(APPUSART0, 1, 115200, moduleRecvParser);
+    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
     POWER_ON;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
@@ -396,7 +396,7 @@ static void modulePowerOffRelease(void)
 static void modulePowerOffProcess(void)
 {
     PWRKEY_LOW;
-	startTimer(35, modulePowerOffRelease, 0);
+	startTimer(37, modulePowerOffRelease, 0);
 }
 /**************************************************
 @bref		模组关机
@@ -409,7 +409,7 @@ void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
     moduleInit();
-    portUartCfg(APPUSART0, 0, 115200, NULL);
+    portUartCfg(APPUSART0, 0, 57600, NULL);
     POWER_OFF;
     RSTKEY_HIGH;
     PWRKEY_HIGH;
@@ -442,7 +442,7 @@ void moduleReset(void)
     LogMessage(DEBUG_ALL, "moduleReset");
     moduleInit();
     RSTKEY_LOW;
-    startTimer(10, modulePowerOn, 0);
+    startTimer(10, moduleReleaseRstkey, 0);
     socketDelAll();
 }
 
@@ -772,14 +772,8 @@ void netConnectTask(void)
             }
             else
             {
-//                if (moduleState.qipactSet == 0)
-//                {
-                    sendModuleCmd(MIPCALL_CMD, "1,1");
-//                }
-//                else
-//                {
-//                    sendModuleCmd(MIPCALL_CMD, "?");
-//                }
+                sendModuleCmd(MIPCALL_CMD, "1,1");
+                sendModuleCmd(MIPCALL_CMD, "?");
                 if (moduleState.fsmtick >= 45)
                 {
                     LogMessage(DEBUG_ALL, "try QIPACT again");
