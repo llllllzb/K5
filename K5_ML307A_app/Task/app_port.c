@@ -184,6 +184,16 @@ void pollUartData(void)
 void portUartCfg(UARTTYPE type, uint8_t onoff, uint32_t baudrate,
                  void (*rxhandlefun)(uint8_t *, uint16_t len))
 {
+
+    if (onoff)
+    {
+        LogPrintf(DEBUG_ALL, "Open uart%d==>%d", type, baudrate);
+    }
+    else
+    {
+        LogPrintf(DEBUG_ALL, "Close uart%d", type);
+    }
+
     switch (type)
     {
         case APPUSART0:
@@ -336,10 +346,7 @@ void portUartCfg(UARTTYPE type, uint8_t onoff, uint32_t baudrate,
     {
         LogPrintf(DEBUG_ALL, "Open uart%d==>%d", type, baudrate);
     }
-    else
-    {
-        LogPrintf(DEBUG_ALL, "Close uart%d", type);
-    }
+
 }
 /**
  * @brief               串口发送数据
@@ -537,6 +544,11 @@ void GPIOA_IRQHandler(void)
         wakeUpByInt(0, 8);
         GPIOA_ClearITFlagBit(RING_PIN);
     }
+    if (iqr & LDR_PIN)
+    {
+		sysinfo.ldrIrqFlag = 1;
+		GPIOA_ClearITFlagBit(LDR_PIN);
+    }
 
 
 }
@@ -575,45 +587,7 @@ void portGpioWakeupIRQHandler(void)
 				tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
 			}
 		}
-	}
-	/*倾斜触发*/
-	if (sysinfo.doMotionFlag)
-	{
-		/*开启任务*/
-		if (sysinfo.kernalRun == 0)
-		{
-			wakeUpByInt(2, 3);
-			tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
-		}
-		if (sysparam.tiltalm == 0)
-		{
-			sysinfo.doMotionFlag = 0;
-		}
-	}
-	
-
-//	else
-//	{
-//		sysinfo.ldrIrqFlag = 0;
-//	}
-	/*倾斜触发*/
-//	if (sysparam.tiltalm)
-//	{
-//		if (sysinfo.doMotionFlag)
-//		{
-//			/*开启任务*/
-//			if (sysinfo.kernalRun == 0)
-//			{
-//				wakeUpByInt(2, 3);
-//				tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
-//			}
-//		}
-//	}
-//	else
-//	{
-//		sysinfo.doMotionFlag = 0;
-//	}
-//	
+	}	
 }
 
 
@@ -695,6 +669,32 @@ void portMicGpioCfg(void)
 	GPIOB_ModeCfg(MICPWR_PIN, GPIO_ModeOut_PP_5mA);
 	MICPWR_OFF;
 }
+
+/**
+ * @brief   LDR GPIO初始化
+ * @param
+ * @return
+ */
+void portLdrGpioCfg(uint8_t onoff)
+{
+	
+	if (onoff)
+	{
+		if (sysparam.ldrEn == 0)
+			return;
+		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
+		GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_Floating);
+		GPIOA_ITModeCfg(LDR_PIN,GPIO_ITMode_FallEdge);
+		PFIC_EnableIRQ(GPIO_A_IRQn);
+	}
+	else
+	{
+		R16_PA_INT_EN &= ~LDR_PIN;
+        GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_PD);
+	}
+	
+}
+
 
 
 /**
@@ -1504,17 +1504,17 @@ void portLowPowerCfg(void)
  */
 void portAdcCfg(uint8_t onoff)
 {
-    //PA9  channel 3
-    if (onoff)
-    {
-    	sysinfo.adcOnoff = 1;
-        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_Floating);
-    }
-    else
-    {
-    	sysinfo.adcOnoff = 0;
-        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_PD);
-    }
+//    //PA9  channel 3
+//    if (onoff)
+//    {
+//    	sysinfo.adcOnoff = 1;
+//        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_Floating);
+//    }
+//    else
+//    {
+//    	sysinfo.adcOnoff = 0;
+//        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_PD);
+//    }
 }
 /**
  * @brief   读取ADC电压

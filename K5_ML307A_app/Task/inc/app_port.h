@@ -7,7 +7,7 @@
 #define APPUSART0_BUFF_SIZE 1024
 #define APPUSART1_BUFF_SIZE 10
 #define APPUSART2_BUFF_SIZE 128
-#define APPUSART3_BUFF_SIZE 512
+#define APPUSART3_BUFF_SIZE 768
 
 //4G模组涉及IO
 #define SUPPLY_PIN      
@@ -63,8 +63,13 @@
 
 
 
-#define VCARD_ADCPIN	GPIO_Pin_9
+//#define VCARD_ADCPIN	GPIO_Pin_9
 #define ADC_CHANNEL		CH_EXTIN_13
+
+//LDR 涉及IO
+#define LDR_PIN			GPIO_Pin_9 //PA9
+#define LDR_READ		(GPIOA_ReadPortPin(LDR_PIN)?1:0)
+
 
 
 // (MAXCALCTICKS * 5) + (max remainder) must be <= (uint16 max),
@@ -121,6 +126,7 @@ void portModuleGpioCfg(uint8_t state);
 void portLedGpioCfg(uint8_t onoff);
 void portGpsGpioCfg(uint8_t onoff);
 void portMicGpioCfg(void);
+void portLdrGpioCfg(uint8_t onoff);
 
 
 

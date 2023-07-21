@@ -383,6 +383,7 @@ void modulePowerOn(void)
 static void modulePowerOffRelease(void)
 {
 	LogMessage(DEBUG_ALL, "modulePowerOff Done");
+	moduleInit();
 	PWRKEY_HIGH;
 }	
 
@@ -408,7 +409,7 @@ static void modulePowerOffProcess(void)
 void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
-    moduleInit();
+    
     portUartCfg(APPUSART0, 0, 57600, NULL);
     POWER_OFF;
     RSTKEY_HIGH;
@@ -2896,6 +2897,19 @@ uint8_t isModulePowerOnOk(void)
         return 1;
     return 0;
 }
+/**************************************************
+@bref		模组是否关机
+@param
+@return
+@note
+**************************************************/
+uint8_t isModulePowerOff(void)
+{
+	if (moduleState.powerState == 0)
+		return 1;
+	return 0;
+}
+
 
 /**************************************************
 @bref		挂断电话

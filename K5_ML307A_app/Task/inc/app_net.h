@@ -249,6 +249,8 @@ char *getQgmr(void);
 
 uint8_t isModuleRunNormal(void);
 uint8_t isModulePowerOnOk(void);
+uint8_t isModulePowerOff(void);
+
 void stopCall(void);
 void callPhone(char *tel);
 

@@ -401,8 +401,10 @@ void gpsUartRead(uint8_t *msg, uint16_t len)
 
 static void gpsCfg(void)
 {
-    char param[50];
+    char param[70];
     sprintf(param, "$PCAS03,1,0,1,0,1,0,0,0,0,0,0,0,0,0*03\r\n");
+    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
+    DelayMs(100);
     portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
     LogMessage(DEBUG_ALL, "gps config nmea output");
 }
@@ -425,7 +427,48 @@ static void changeGPSBaudRate(void)
     portUartCfg(APPUSART3, 1, 115200, gpsUartRead);
     portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
     LogMessage(DEBUG_ALL, "gps config baudrate to 115200");
-    startTimer(10, gpsCfg, 0);
+    startTimer(20, gpsCfg, 0);
+}
+
+
+/**************************************************
+@bref		华大GPS热启动指令
+@param
+@return
+@note
+**************************************************/
+void hdGpsHotStart(void)
+{
+	char cmd[] = {0xF1, 0xD9, 0x06, 0x40, 0x01, 0x00, 0x03, 0x4A, 0x24};
+	portUartSend(&usart3_ctl, cmd, sizeof(cmd));
+	LogMessage(DEBUG_ALL, "GPS config hot start");
+}
+
+/**************************************************
+@bref		华大GPS GSV指令
+@param
+@return
+@note
+**************************************************/
+void hdGpsGsvCtl(uint8_t onoff)
+{
+	char cmd1[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x01, 0xFF, 0x18};//打开
+	char cmd2[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x00, 0xFE, 0x17};//关闭
+	if (onoff)
+	{
+		portUartSend(&usart3_ctl, cmd1, sizeof(cmd1));
+		LogMessage(DEBUG_ALL, "GPS open gsv");
+	}
+	else
+	{
+		portUartSend(&usart3_ctl, cmd2, sizeof(cmd2));
+		LogMessage(DEBUG_ALL, "GPS close gsv");
+	}
+}
+void hdGpsCfg(void)
+{
+	hdGpsHotStart();
+	hdGpsGsvCtl(0);
 }
 
 /**************************************************
@@ -439,7 +482,8 @@ static void gpsOpen(void)
 {
     GPSPWR_ON;
     GPSLNA_ON;
-    startTimer(30, changeGPSBaudRate, 0);
+    portUartCfg(APPUSART3, 1, 115200, gpsUartRead);
+    startTimer(20, hdGpsCfg, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
@@ -522,10 +566,10 @@ static void gpsRequestTask(void)
     switch (sysinfo.gpsFsm)
     {
         case GPSCLOSESTATUS:
-           	if (sysinfo.canRunFlag != 1)
-            {
-            	break;
-            }
+//           	if (sysinfo.canRunFlag != 1)
+//            {
+//            	break;
+//            }
             //有设备请求开关
             if (sysinfo.gpsRequest != 0)
             {
@@ -1086,13 +1130,17 @@ static void motionCheckTask(void)
 @note
 **************************************************/
 
-static uint8_t voltageCheckTask(void)
+static void voltageCheckTask(void)
 {
     static uint16_t lowpowertick = 0;
     static uint8_t  lowwflag = 0;
     float x;
     static uint8_t protectTick = 0;
     uint8_t ret = 0;
+    if (sysinfo.adcOnoff == 0)
+	{
+		return;
+	}
 
     x = portGetAdcVol(ADC_CHANNEL);
     sysinfo.outsidevoltage = x * sysparam.adccal;
@@ -1670,7 +1718,7 @@ static void modeDone(void)
     else if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3)
     {
     	motionTick = 0;
-        if (sysinfo.sleep)
+        if (sysinfo.sleep && isModulePowerOff())
         {
             tmos_set_event(sysinfo.taskId, APP_TASK_STOP_EVENT);
         }
@@ -1881,10 +1929,10 @@ void volCheckRequestClear(void)
 
 static void sysModeRunTask(void)
 {
-	if (SysBatDetection() != 1)
-	{
-		return;
-	}
+//	if (SysBatDetection() != 1)
+//	{
+//		return;
+//	}
     switch (sysinfo.runFsm)
     {
         case MODE_CHOOSE:
@@ -2113,7 +2161,7 @@ void autoSleepTask(void)
             LogMessage(DEBUG_ALL, "disable sleep");
             tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
             sysinfo.sleep = 0;
-            portDebugUartCfg(1);
+            //portDebugUartCfg(1);
         }
     }
     else
@@ -2126,7 +2174,7 @@ void autoSleepTask(void)
             LogMessage(DEBUG_ALL, "enable sleep");
             tmos_stop_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT);
             sysinfo.sleep = 1;
-            portDebugUartCfg(0);
+            //portDebugUartCfg(0);
         }
     }
 }
@@ -2208,26 +2256,15 @@ static void tiltDetectionTask(void)
 
 void calculateNormalTime(void)
 {
-//	if (LDR_READ)
-//	{
-//		/*暗*/
-//		if (sysinfo.ldrDarkCnt < 10)
-//		{
-//			sysinfo.ldrDarkCnt++;
-//		}
-//	}
-//	if (sysparam.tiltalm)
-//	{
-//		if (!ROLL_DET)
-//		{
-//			/*平放*/
-//			if (sysinfo.tiltNormalCnt < 10)
-//			{
-//				sysinfo.tiltNormalCnt++;
-//			}
-//
-//		}
-//	}
+	if (LDR_READ)
+	{
+		/*暗*/
+		if (sysinfo.ldrDarkCnt < 10)
+		{
+			sysinfo.ldrDarkCnt++;
+		}
+	}
+
 
 }
 
@@ -2241,7 +2278,7 @@ static void lightDetectionTask(void)
 {
 	if (sysparam.ldrEn == 0)
 		return;
-	
+	//LogPrintf(DEBUG_ALL, "ldr:%d", LDR_READ);
 	if (sysinfo.ldrIrqFlag)
 	{
 		//亮
@@ -2283,7 +2320,7 @@ void taskRunInSecond(void)
     netConnectTask();
     motionCheckTask();
     gpsRequestTask();
-    voltageCheckTask();
+    //voltageCheckTask();
     alarmRequestTask();
     gpsUplodOnePointTask();
     lbsRequestTask();
@@ -2401,6 +2438,7 @@ void myTaskPreInit(void)
     portLedGpioCfg(1);
     portAdcCfg(1);
 	portMicGpioCfg();
+	portLdrGpioCfg(1);
 
     portWdtCfg();
     
@@ -2464,6 +2502,7 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
 		portGpsGpioCfg(1);
 		portLedGpioCfg(1);
 		portAdcCfg(1);
+		portLdrGpioCfg(1);
 		portWdtCfg();
 		portMicGpioCfg();
         tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));

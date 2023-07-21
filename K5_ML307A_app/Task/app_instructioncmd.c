@@ -1191,18 +1191,19 @@ static void doAlarmModeInstrucion(ITEM *item, char *message)
         {
             sysparam.ldrEn = 1;
             sprintf(message, "Enables the light-sensing alarm function successfully");
-
+			portLdrGpioCfg(1);
         }
         else if (my_strpach(item->item_data[1], "L0"))
         {
             sysparam.ldrEn = 0;
             sprintf(message, "Disable the light-sensing alarm function successfully");
-
+			portLdrGpioCfg(0);
         }
         else
         {
             sysparam.ldrEn = 1;
             sprintf(message, "Unknow cmd,enable the light-sensing alarm function by default");
+            portLdrGpioCfg(1);
         }
         paramSaveAll();
 

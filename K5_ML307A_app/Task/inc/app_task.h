@@ -165,7 +165,7 @@ uint8_t getTerminalChargeState(void);
 void terminalGPSFixed(void);
 void terminalGPSUnFixed(void);
 
-
+void hdGpsGsvCtl(uint8_t onoff);
 
 void ledStatusUpdate(uint8_t status, uint8_t onoff);
 void lbsRequestClear(void);
