@@ -22,7 +22,7 @@
 #define BOOT_PARAM_FLAG         0xB0
 
 
-#define EEPROM_VERSION									"K5_ML307A_Vlalalal"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.1.0"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -109,6 +109,7 @@ typedef struct
 	uint8_t agpsen;
 	uint8_t debug;
 
+	uint16_t mode4WakeupMin;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/
@@ -126,6 +127,8 @@ typedef struct
     uint16_t noNmeaRstCnt;
     uint8_t debug;
     int32_t rtcOffset;
+    double saveLat;
+	double saveLon;
 }dynamicParam_s;
 
 

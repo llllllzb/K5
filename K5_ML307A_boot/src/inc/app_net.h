@@ -51,8 +51,7 @@ typedef enum
     MCHIPINFO_CMD,
     MCFG_CMD,
     AUTHREQ_CMD,
-    MIPCALL_CMD,
-
+	MIPCALL_CMD,
 } atCmdType_e;
 
 

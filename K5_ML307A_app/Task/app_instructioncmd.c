@@ -166,6 +166,9 @@ static void doParamInstruction(ITEM *item, char *message)
         case MODE23:
             sprintf(message + strlen(message), "Mode23: %d minutes;", sysparam.gapMinutes);
             break;
+       	case MODE4:
+			sprintf(message + strlen(message), "Mode4: %d M,%dM;", sysparam.gapMinutes, sysparam.mode4WakeupMin);
+       		break;
     }
 
     sprintf(message + strlen(message), "StartUp:%u;RunTime:%u;", dynamicParam.startUpCnt, dynamicParam.runTime);
@@ -268,7 +271,14 @@ static void doModeInstruction(ITEM *item, char *message)
     uint16_t valueofminute;
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
-        sprintf(message, "Mode%d,%d,%d", sysparam.MODE, sysparam.gpsuploadgap, sysparam.gapMinutes);
+    	if (sysparam.MODE == MODE4)
+    	{
+			sprintf(message, "Mode%d,mode4WakeupMin%d", sysparam.MODE, sysparam.mode4WakeupMin);
+    	}
+    	else
+    	{
+        	sprintf(message, "Mode%d,%d,%d", sysparam.MODE, sysparam.gpsuploadgap, sysparam.gapMinutes);
+        }
     }
     else
     {
@@ -433,6 +443,30 @@ static void doModeInstruction(ITEM *item, char *message)
                 sprintf(message, "Change to mode %d and update the startup interval time to %d minutes;", workmode,
                         sysparam.gapMinutes);
                 break;
+
+            case 4:
+				if (item->item_data[2][0] != 0)
+				{
+					sysparam.mode4WakeupMin = (uint16_t)atoi(item->item_data[2]);
+				}
+				if (sysparam.mode4WakeupMin == 0)
+				{
+					sysparam.mode4WakeupMin = 60;
+				}
+				sysparam.MODE = MODE4;
+				terminalAccoff();
+                if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
+                {
+                    gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                }
+                gpsRequestClear(GPS_REQUEST_ALL);
+                lbsRequestClear();
+                wifiRequestClear();
+                agpsRequestClear();
+                portGsensorCtl(0);
+                startTimer(50, changeMode4Callback, 0);
+                sprintf(message, "Change to mode %d and update the sleep time to%d min", workmode, sysparam.mode4WakeupMin);
+            	break;
             default:
                 strcpy(message, "Unsupport mode");
                 break;
@@ -769,7 +803,7 @@ void doFenceInstrucion(ITEM *item, char *message)
 
 void doIccidInstrucion(ITEM *item, char *message)
 {
-    sendModuleCmd(CCID_CMD, NULL);
+    sendModuleCmd(MCCID_CMD, NULL);
     sprintf(message, "ICCID:%s", getModuleICCID());
 }
 

@@ -46,7 +46,8 @@ const atCmd_s cmdtable[] =
 	{MCHIPINFO_CMD, "AT+MCHIPINFO"},
 	{MCFG_CMD, "AT+MCFG"},
 	{AUTHREQ_CMD, "AT*AUTHReq"},
-    {MIPCALL_CMD, "AT+MIPCALL"}
+	{MIPCALL_CMD, "AT+MIPCALL"},
+
 };
 
 /**************************************************
@@ -251,7 +252,7 @@ static void modulePressReleaseKey(void)
 static void modulePressPowerKey(void)
 {
     PWRKEY_LOW;
-    startTimer(3000, modulePressReleaseKey, 0);
+    startTimer(2500, modulePressReleaseKey, 0);
 }
 /**************************************************
 @bref		模组开机
@@ -272,33 +273,8 @@ void modulePowerOn(void)
     socketDelAll();
 }
 
-
 /**************************************************
-@bref       释放关机按键
-@param
-@return
-@note
-**************************************************/
-static void modulePowerOffRelease(void)
-{
-    LogMessage(DEBUG_ALL, "modulePowerOff Done");
-    PWRKEY_HIGH;
-}
-
-
-/**************************************************
-@bref       按下关机按键
-@param
-@return
-@note
-**************************************************/
-static void modulePowerOffProcess(void)
-{
-    PWRKEY_LOW;
-    startTimer(3700, modulePowerOffRelease, 0);
-}
-/**************************************************
-@bref       模组关机
+@bref		模组关机
 @param
 @return
 @note
@@ -312,7 +288,6 @@ void modulePowerOff(void)
     POWER_OFF;
     RSTKEY_HIGH;
     PWRKEY_HIGH;
-    startTimer(500, modulePowerOffProcess, 0);
     socketDelAll();
 }
 
@@ -342,7 +317,7 @@ void moduleReset(void)
     POWER_OFF;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
-    startTimer(1000, moduleReleaseRstkey, 0);
+    startTimer(1000, modulePowerOn, 0);
     socketDelAll();
 }
 
@@ -491,7 +466,8 @@ void netConnectTask(void)
             {
                 moduleState.cpinResponOk = 0;
                 sendModuleCmd(AT_CMD, NULL);
-
+                netSetCgdcong((char *)sysparam.apn);
+                netSetApn((char *)sysparam.apn, (char *)sysparam.apnuser, (char *)sysparam.apnpassword);
                 changeProcess(CSQ_STATUS);
 
             }
@@ -578,8 +554,9 @@ void netConnectTask(void)
             }
             else
             {
-                sendModuleCmd(MIPCALL_CMD, "1,1");
-                sendModuleCmd(MIPCALL_CMD, "?");
+				sendModuleCmd(MIPCALL_CMD, "1,1");
+				sendModuleCmd(MIPCALL_CMD, "?");
+
                 if (moduleState.fsmtick >= 45)
                 {
                     LogMessage(DEBUG_ALL, "try QIPACT again");
@@ -933,7 +910,6 @@ static void mipcallParser(uint8_t *buf, uint16_t len)
     rebuf += index;
     relen -= index;
     ret = rebuf[12] - '0';
-    LogPrintf(DEBUG_ALL, "ret:%d", ret);
     if (ret == 1)
     {
         moduleState.qipactOk = 1;
@@ -942,7 +918,9 @@ static void mipcallParser(uint8_t *buf, uint16_t len)
     {
         moduleState.qipactOk = 0;
     }
+
 }
+
 /**************************************************
 @bref		模组端数据接收解析器
 @param
@@ -986,7 +964,8 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     moduleRspSuccess();
     mipurcParser(dataRestore, len);
     mipopenParser(dataRestore, len);
-    mipcallParser(dataRestore, len);
+	mipcallParser(dataRestore, len);
+
     /*****************************************/
     switch (moduleState.cmd)
     {

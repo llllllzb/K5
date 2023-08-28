@@ -7,12 +7,12 @@
 #define APPUSART0_BUFF_SIZE 1024
 #define APPUSART1_BUFF_SIZE 10
 #define APPUSART2_BUFF_SIZE 128
-#define APPUSART3_BUFF_SIZE 768
+#define APPUSART3_BUFF_SIZE 1024
 
 //4G模组涉及IO
-#define SUPPLY_PIN      
-#define PORT_SUPPLY_ON  
-#define PORT_SUPPLY_OFF 
+#define SUPPLY_PIN      GPIO_Pin_11		//PA11
+#define PORT_SUPPLY_ON  GPIOA_SetBits(SUPPLY_PIN)
+#define PORT_SUPPLY_OFF GPIOA_ResetBits(SUPPLY_PIN)
 
 #define POWER_PIN    	GPIO_Pin_15		//PA15
 #define PORT_PWRKEY_H   GPIOA_ResetBits(POWER_PIN)
@@ -39,9 +39,9 @@
 #define SDA_PIN         GPIO_Pin_15
 
 //LED 涉及IO
-#define LED1_PIN        GPIO_Pin_11		//PA11
-#define LED1_ON         GPIOA_SetBits(LED1_PIN)
-#define LED1_OFF        GPIOA_ResetBits(LED1_PIN)
+#define LED1_PIN        GPIO_Pin_11		//PB11
+#define LED1_ON         GPIOB_SetBits(LED1_PIN)
+#define LED1_OFF        GPIOB_ResetBits(LED1_PIN)
 #define LED2_PIN
 #define LED2_ON
 #define LED2_OFF
@@ -59,11 +59,9 @@
 #define MICPWR_PIN		GPIO_Pin_10		//PB10
 #define MICPWR_ON		GPIOB_SetBits(MICPWR_PIN)
 #define MICPWR_OFF		GPIOB_ResetBits(MICPWR_PIN)
-#define MICINT_PIN		GPIO_Pin_8		//PA8
+#define MICINT_PIN		GPIO_Pin_8		//PA8（与ADCPIN相同）
 
-
-
-//#define VCARD_ADCPIN	GPIO_Pin_9
+#define VCARD_ADCPIN	GPIO_Pin_8
 #define ADC_CHANNEL		CH_EXTIN_13
 
 //LDR 涉及IO

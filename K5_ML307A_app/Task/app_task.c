@@ -392,83 +392,29 @@ void gpsUartRead(uint8_t *msg, uint16_t len)
     }
 }
 
+static void hdGpsInjectLocation(void)
+{
+	int32_t lat, lon;
+	lat = dynamicParam.saveLat * 10000000;
+	lon = dynamicParam.saveLon * 10000000;
+	gnss_inject_location(lat, lon, 0, 0);
+	LogPrintf(DEBUG_ALL, "gnss_inject_location==>lat:%d lon:%d", lat, lon);
+	agpsRequestSet();
+	
+}
 /**************************************************
-@bref		切换中科微NMEA输出
+@bref		华大gps配置
 @param
 @return
 @note
 **************************************************/
-
-static void gpsCfg(void)
+static void hdGpsCfg(void)
 {
-    char param[70];
-    sprintf(param, "$PCAS03,1,0,1,0,1,0,0,0,0,0,0,0,0,0*03\r\n");
-    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-    DelayMs(100);
-    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-    LogMessage(DEBUG_ALL, "gps config nmea output");
-}
-
-/**************************************************
-@bref		切换中科微波特率为115200
-@param
-@return
-@note
-**************************************************/
-
-//$PCAS03,1,0,1,1,1,0,0,0,0,0,0,0,0,0*02
-static void changeGPSBaudRate(void)
-{
-    char param[50];
-    portUartCfg(APPUSART3, 1, 9600, gpsUartRead);
-    sprintf(param, "$PCAS01,5*19\r\n");
-    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-    DelayMs(100);
-    portUartCfg(APPUSART3, 1, 115200, gpsUartRead);
-    portUartSend(&usart3_ctl, (uint8_t *)param, strlen(param));
-    LogMessage(DEBUG_ALL, "gps config baudrate to 115200");
-    startTimer(20, gpsCfg, 0);
-}
-
-
-/**************************************************
-@bref		华大GPS热启动指令
-@param
-@return
-@note
-**************************************************/
-void hdGpsHotStart(void)
-{
-	char cmd[] = {0xF1, 0xD9, 0x06, 0x40, 0x01, 0x00, 0x03, 0x4A, 0x24};
-	portUartSend(&usart3_ctl, cmd, sizeof(cmd));
-	LogMessage(DEBUG_ALL, "GPS config hot start");
-}
-
-/**************************************************
-@bref		华大GPS GSV指令
-@param
-@return
-@note
-**************************************************/
-void hdGpsGsvCtl(uint8_t onoff)
-{
-	char cmd1[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x01, 0xFF, 0x18};//打开
-	char cmd2[] = {0xF1, 0xD9, 0x06, 0x01, 0x03, 0x00, 0xF0, 0x04, 0x00, 0xFE, 0x17};//关闭
-	if (onoff)
-	{
-		portUartSend(&usart3_ctl, cmd1, sizeof(cmd1));
-		LogMessage(DEBUG_ALL, "GPS open gsv");
-	}
-	else
-	{
-		portUartSend(&usart3_ctl, cmd2, sizeof(cmd2));
-		LogMessage(DEBUG_ALL, "GPS close gsv");
-	}
-}
-void hdGpsCfg(void)
-{
-	hdGpsHotStart();
+	hdGpsColdStart();
+	//hdGpsHotStart();
+	DelayMs(1);
 	hdGpsGsvCtl(0);
+	startTimer(10, hdGpsInjectLocation, 0);
 }
 
 /**************************************************
@@ -480,10 +426,10 @@ void hdGpsCfg(void)
 
 static void gpsOpen(void)
 {
-    GPSPWR_ON;
+	GPSPWR_ON;
     GPSLNA_ON;
     portUartCfg(APPUSART3, 1, 115200, gpsUartRead);
-    startTimer(20, hdGpsCfg, 0);
+    startTimer(5, hdGpsCfg, 0);
     sysinfo.gpsUpdatetick = sysinfo.sysTick;
     sysinfo.gpsOnoff = 1;
     gpsChangeFsmState(GPSWATISTATUS);
@@ -492,7 +438,6 @@ static void gpsOpen(void)
     moduleSleepCtl(0);
     LogMessage(DEBUG_ALL, "gpsOpen");
 }
-
 /**************************************************
 @bref		等待gps稳定
 @param
@@ -503,12 +448,20 @@ static void gpsOpen(void)
 static void gpsWait(void)
 {
     static uint8_t runTick = 0;
-    if (++runTick >= 4)
+    static uint8_t first;
+    if (++runTick >= 5)
     {
         runTick = 0;
         gpsChangeFsmState(GPSOPENSTATUS);
-		//等待gps配置完毕，切换115200
-        agpsRequestSet();
+//		if (gpsRequestOtherGet(GPS_REQUEST_BLE))
+//		{
+//			if (sysinfo.sysTick - sysinfo.agpsTick >= 7200 || first == 0)
+//			{
+//				first = 1;
+//				sysinfo.agpsTick = sysinfo.sysTick;
+//				agpsRequestSet();
+//			}
+//		}
     }
 }
 
@@ -523,35 +476,56 @@ static void gpsClose(void)
 {
     GPSPWR_OFF;
     GPSLNA_OFF;
+    portUartCfg(APPUSART3, 0, 115200, NULL);
     sysinfo.rtcUpdate = 0;
     sysinfo.gpsOnoff = 0;
     gpsClearCurrentGPSInfo();
     terminalGPSUnFixed();
     gpsChangeFsmState(GPSCLOSESTATUS);
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
-    if (primaryServerIsReady())
-    {
-        moduleSleepCtl(1);
-    }
+//    if (primaryServerIsReady())
+//    {
+//        moduleSleepCtl(1);
+//    }
     LogMessage(DEBUG_ALL, "gpsClose");
 }
 
 /**************************************************
-@bref		gps在等待模式时，指令不通
+@bref		保存上一次gps位置
 @param
 @return
 @note
-在发送了gps指令后，EC800M 模组会出现一段时间的卡顿，为避免发送指令无响应，其他地方的指令需要延迟一会
 **************************************************/
-
-uint8_t gpsInWait(void)
+void saveGpsHistory(void)
 {
-    if (sysinfo.gpsFsm == GPSWATISTATUS)
+	gpsinfo_s *gpsinfo;
+    double latitude, longtitude;
+    gpsinfo = getLastFixedGPSInfo();
+    if (gpsinfo->fixstatus != 0)
     {
-        return 1;
+        latitude = gpsinfo->latitude;
+        longtitude = gpsinfo->longtitude;
+        if (gpsinfo->NS == 'S')
+        {
+            if (latitude > 0)
+            {
+                latitude *= -1;
+            }
+        }
+        if (gpsinfo->EW == 'W')
+        {
+            if (longtitude > 0)
+            {
+                longtitude *= -1;
+            }
+        }
+        dynamicParam.saveLat = latitude;
+        dynamicParam.saveLon = longtitude;
+        LogPrintf(DEBUG_ALL, "Save Latitude:%lf,Longtitude:%lf", dynamicParam.saveLat, dynamicParam.saveLon);
+		dynamicParamSaveAll();
     }
-    return 0;
 }
+
 
 /**************************************************
 @bref		gps控制任务
@@ -563,14 +537,15 @@ uint8_t gpsInWait(void)
 static void gpsRequestTask(void)
 {
     gpsinfo_s *gpsinfo;
+
     switch (sysinfo.gpsFsm)
     {
         case GPSCLOSESTATUS:
-//           	if (sysinfo.canRunFlag != 1)
-//            {
-//            	break;
-//            }
             //有设备请求开关
+            if (sysinfo.canRunFlag != 1)
+            {
+            	break;
+            }
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
@@ -586,17 +561,19 @@ static void gpsRequestTask(void)
                 ledStatusUpdate(SYSTEM_LED_GPSOK, 1);
                 lbsRequestClear();
                 wifiRequestClear();
+                agpsRequestClear();
             }
             else
             {
-                ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
+                ledStatusUpdate(SYSTEM_LED_GPSOK, 0);                
             }
             if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
             {
-                if ((sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
-                {
-                    LogMessage(DEBUG_ALL, "no nmea ouput");
-                }
+            	if (sysinfo.gpsRequest == 0)
+            	{
+					saveGpsHistory();
+					agpsRequestClear();
+            	}
                 gpsClose();
             }
             break;
@@ -605,6 +582,7 @@ static void gpsRequestTask(void)
             break;
     }
 }
+
 
 /**************************************************
 @bref		上送一个gps位置
@@ -1439,7 +1417,7 @@ static void modeChoose(void)
             dynamicParamSaveAll();
             wakeUpByInt(2, 30);
             ledStatusUpdate(SYSTEM_LED_BLE, 1);
-            POWER_ON;
+             
             portSetNextAlarmTime();
             bleChangeFsm(BLE_SCAN);
             bleTry.scanCnt = 0;
@@ -1585,6 +1563,14 @@ static void modeStart(void)
         case MODE23:
             portGsensorCtl(1);
             break;
+        /*离线模式*/
+        case MODE4:
+			portGsensorCtl(0);
+
+		    modulePowerOn();
+		    netResetCsqSearch();
+		    changeModeFsm(MODE_RUNING);
+        	return;
         default:
             sysparam.MODE = MODE2;
             paramSaveAll();
@@ -1594,7 +1580,7 @@ static void modeStart(void)
     LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);
     lbsRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-    ledStatusUpdate(SYSTEM_LED_RUN, 1);
+    
     modulePowerOn();
     netResetCsqSearch();
     changeModeFsm(MODE_RUNING);
@@ -1658,6 +1644,10 @@ static void modeRun(void)
             modeShutDownQuickly();
             gpsUploadPointToServer();
             break;
+        case MODE4:
+			sysRunTimeCnt();
+			
+        	break;
         default:
             LogMessage(DEBUG_ALL, "mode change unknow");
             sysparam.MODE = MODE2;
@@ -1699,6 +1689,10 @@ static void modeDone(void)
     {
         runTick++;
     }
+    else
+   	{
+   		runTick = 0;
+   	}
 	bleTryInit();
     if (sysinfo.gpsRequest || runTick >= 7200)
     {
@@ -1715,7 +1709,7 @@ static void modeDone(void)
         }
         LogMessage(DEBUG_ALL, "modeDone==>Change to mode start");
     }
-    else if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3)
+    else if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || sysparam.MODE == MODE4)
     {
     	motionTick = 0;
         if (sysinfo.sleep && isModulePowerOff())
@@ -1801,9 +1795,31 @@ static void sysAutoReq(void)
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             if (sysinfo.kernalRun == 0)
             {
+            	volCheckRequestSet();
                 tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
             }
         }
+    }
+    else if (sysparam.MODE == MODE4)
+    {
+		if (isModeDone())
+		{
+			sysinfo.mode4NoNetTick++;
+			if (sysinfo.mode4NoNetTick >= sysparam.mode4WakeupMin)
+			{
+				sysinfo.mode4NoNetTick = 0;
+                LogMessage(DEBUG_ALL, "mode 4 restoration network");
+                if (sysinfo.kernalRun == 0)
+                {
+                	volCheckRequestSet();
+                    tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+                }
+			}
+		}
+		else
+		{
+			sysinfo.mode4NoNetTick = 0;
+		}
     }
     else
     {
@@ -1817,6 +1833,7 @@ static void sysAutoReq(void)
                 LogMessage(DEBUG_ALL, "upload period");
                 if (sysinfo.kernalRun == 0)
                 {
+                	volCheckRequestSet();
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
                 }
             }
@@ -1929,10 +1946,10 @@ void volCheckRequestClear(void)
 
 static void sysModeRunTask(void)
 {
-//	if (SysBatDetection() != 1)
-//	{
-//		return;
-//	}
+	if (SysBatDetection() != 1)
+	{
+		return;
+	}
     switch (sysinfo.runFsm)
     {
         case MODE_CHOOSE:
@@ -2103,7 +2120,7 @@ static uint8_t getWakeUpState(void)
         return 1;
     }
     //未联网，不休眠
-    if (primaryServerIsReady() == 0 && isModeRun())
+    if (primaryServerIsReady() == 0 && isModeRun() && sysparam.MODE != MODE4)
     {
         return 2;
     }
@@ -2123,6 +2140,10 @@ static uint8_t getWakeUpState(void)
     if (sysinfo.irqTick != 0)
     {
 		return 6;
+    }
+    if (sysparam.MODE == MODE4 && isModeRun() && isModuleOfflineStatus() == 0)
+    {
+    	return 7;
     }
     //非0 时强制不休眠
     return 0;
@@ -2320,7 +2341,7 @@ void taskRunInSecond(void)
     netConnectTask();
     motionCheckTask();
     gpsRequestTask();
-    //voltageCheckTask();
+    voltageCheckTask();
     alarmRequestTask();
     gpsUplodOnePointTask();
     lbsRequestTask();
@@ -2439,20 +2460,20 @@ void myTaskPreInit(void)
     portAdcCfg(1);
 	portMicGpioCfg();
 	portLdrGpioCfg(1);
-
     portWdtCfg();
-    
     portDebugUartCfg(1);
     bleTryInit();
     socketListInit();
-    portSleepDn();
+    portSleepEn();
+	ledStatusUpdate(SYSTEM_LED_RUN, 1);
 
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
     //createSystemTask(tiltDetectionTask, 1);
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
-
+	LogMessage(DEBUG_ALL, ">>>>>>>>>>>>>>>>>>>>>");
+    LogPrintf(DEBUG_ALL, "SYS_GetLastResetSta:%x", SYS_GetLastResetSta());
 
 }
 
@@ -2520,9 +2541,8 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
 		portLedGpioCfg(0);
 		
 		portMicGpioCfg();
-		tmos_stop_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT);
-        ret = tmos_stop_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT);
-        LogPrintf(DEBUG_ALL, "ret:%d", ret);
+		portWdtCancel();
+       	tmos_stop_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT);
         portDebugUartCfg(0);
         return events ^ APP_TASK_STOP_EVENT;
     }

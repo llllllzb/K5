@@ -185,11 +185,7 @@ void portUartCfg(UARTTYPE type, uint8_t onoff, uint32_t baudrate,
                  void (*rxhandlefun)(uint8_t *, uint16_t len))
 {
 
-    if (onoff)
-    {
-        LogPrintf(DEBUG_ALL, "Open uart%d==>%d", type, baudrate);
-    }
-    else
+    if (onoff == 0)
     {
         LogPrintf(DEBUG_ALL, "Close uart%d", type);
     }
@@ -547,6 +543,14 @@ void GPIOA_IRQHandler(void)
     if (iqr & LDR_PIN)
     {
 		sysinfo.ldrIrqFlag = 1;
+		if (GPIOA_ReadPortPin(LDR_PIN)) 
+		{
+        	GPIOA_ResetBits(LDR_PIN);
+	    }
+	    else
+	    {
+	        GPIOA_SetBits(LDR_PIN);
+	    }
 		GPIOA_ClearITFlagBit(LDR_PIN);
     }
 
@@ -602,6 +606,7 @@ void portModuleGpioCfg(uint8_t state)
 {
     if (state)
     {
+    	GPIOA_ModeCfg(SUPPLY_PIN, GPIO_ModeOut_PP_5mA);
         GPIOA_ModeCfg(POWER_PIN, GPIO_ModeOut_PP_5mA);
 		GPIOA_ModeCfg(RST_PIN, GPIO_ModeOut_PP_5mA);
         GPIOA_ModeCfg(DTR_PIN, GPIO_ModeOut_PP_5mA);
@@ -615,6 +620,7 @@ void portModuleGpioCfg(uint8_t state)
     else
     {
         R16_PA_INT_EN &= ~RING_PIN;
+        GPIOA_ModeCfg(SUPPLY_PIN, GPIO_ModeIN_PD);
         GPIOA_ModeCfg(DTR_PIN, GPIO_ModeIN_PD);
         GPIOA_ModeCfg(POWER_PIN, GPIO_ModeIN_PD);
 		GPIOA_ModeCfg(RST_PIN, GPIO_ModeIN_PD);
@@ -631,13 +637,13 @@ void portLedGpioCfg(uint8_t onoff)
 {
 	if (onoff)
 	{
-	    GPIOA_ModeCfg(LED1_PIN, GPIO_ModeOut_PP_5mA);
+	    GPIOB_ModeCfg(LED1_PIN, GPIO_ModeOut_PP_5mA);
 	    LED1_OFF;
 	    LED2_OFF;
     }
     else
     {
-		GPIOA_ModeCfg(LED1_PIN, GPIO_ModeIN_PD);
+		GPIOB_ModeCfg(LED1_PIN, GPIO_ModeIN_PD);
     }
 }
 
@@ -666,8 +672,8 @@ void portGpsGpioCfg(uint8_t onoff)
  */
 void portMicGpioCfg(void)
 {
-	GPIOB_ModeCfg(MICPWR_PIN, GPIO_ModeOut_PP_5mA);
-	MICPWR_OFF;
+//	GPIOB_ModeCfg(MICPWR_PIN, GPIO_ModeOut_PP_5mA);
+//	MICPWR_OFF;
 }
 
 /**
@@ -677,14 +683,21 @@ void portMicGpioCfg(void)
  */
 void portLdrGpioCfg(uint8_t onoff)
 {
-	
 	if (onoff)
 	{
 		if (sysparam.ldrEn == 0)
 			return;
 		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
-		GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_Floating);
+		GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_PU);
 		GPIOA_ITModeCfg(LDR_PIN,GPIO_ITMode_FallEdge);
+		if (GPIOA_ReadPortPin(LDR_PIN)) 
+		{
+        	GPIOA_ResetBits(LDR_PIN);
+	    }
+	    else
+	    {
+	        GPIOA_SetBits(LDR_PIN);
+	    }
 		PFIC_EnableIRQ(GPIO_A_IRQn);
 	}
 	else
@@ -751,7 +764,7 @@ void portDebugUartCfg(uint8_t onoff)
 	}
 	else
 	{
-		if (sysinfo.sleep)
+		if (sysinfo.sleep && sysinfo.kernalRun == 0)
 		{
 			portUartCfg(APPUSART2, 0, 115200, NULL);
 //		    // 手动拉低Boot引脚
@@ -975,8 +988,8 @@ void portGsensorCtl(uint8_t onoff)
         mir3da_init();
 
 		//PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
-        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PU);
-        GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_FallEdge);
+        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PD);
+        GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_RiseEdge);
         PFIC_EnableIRQ(GPIO_B_IRQn);
     }
     else
@@ -1504,17 +1517,17 @@ void portLowPowerCfg(void)
  */
 void portAdcCfg(uint8_t onoff)
 {
-//    //PA9  channel 3
-//    if (onoff)
-//    {
-//    	sysinfo.adcOnoff = 1;
-//        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_Floating);
-//    }
-//    else
-//    {
-//    	sysinfo.adcOnoff = 0;
-//        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_PD);
-//    }
+    //PA9  channel 3
+    if (onoff)
+    {
+    	sysinfo.adcOnoff = 1;
+        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_Floating);
+    }
+    else
+    {
+    	sysinfo.adcOnoff = 0;
+        GPIOA_ModeCfg(VCARD_ADCPIN, GPIO_ModeIN_PU);
+    }
 }
 /**
  * @brief   读取ADC电压

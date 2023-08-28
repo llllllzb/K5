@@ -106,6 +106,7 @@ typedef enum
     MCFG_CMD,
     AUTHREQ_CMD,
     MIPCALL_CMD,
+    MCCID_CMD,
 } atCmdType_e;
 
 
@@ -119,6 +120,7 @@ typedef enum
     CONFIG_STATUS,
     QIACT_STATUS,
     NORMAL_STATUS,
+    OFFLINE_STATUS,
 } moduleStatus_s;
 
 /*指令集对应结构体*/
@@ -197,6 +199,7 @@ typedef struct
     uint8_t csqCount;
     uint8_t cgregCount;
     uint8_t qipactCount;
+    uint8_t qiopenCount;
     uint16_t csqTime;
 } moduleCtrl_s;
 
@@ -233,6 +236,8 @@ void queryBatVoltage(void);
 void queryTemperture(void);
 
 uint8_t isAgpsDataRecvComplete(void);
+void changeMode4Callback(void);
+uint8_t isModuleOfflineStatus(void);
 
 
 uint8_t getModuleRssi(void);

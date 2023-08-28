@@ -361,8 +361,8 @@ static void atCmdFmpcCsqParser(void)
 static void atCmdFmpcIMSIParser(void)
 {
     sendModuleCmd(CIMI_CMD, NULL);
-    sendModuleCmd(CCID_CMD, NULL);
-    sendModuleCmd(CGSN_CMD, NULL);
+    sendModuleCmd(MCCID_CMD, NULL);
+    sendModuleCmd(CGSN_CMD, "1");
     LogPrintf(DEBUG_FACTORY, "FMPC_IMSI_RSP OK, IMSI=%s&&%s&&%s", dynamicParam.SN, getModuleIMSI(), getModuleICCID());
 }
 

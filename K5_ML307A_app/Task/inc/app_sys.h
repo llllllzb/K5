@@ -17,8 +17,9 @@
 #define MODE1									1
 #define MODE2									2
 #define MODE3									3
-#define MODE21								4  //模式2的扩展，类似模式1
-#define MODE23								5  //模式2的扩展，类似模式3
+#define MODE4									4
+#define MODE21									5  //模式2的扩展，类似模式1
+#define MODE23									6  //模式2的扩展，类似模式3
 
 #define ITEMCNTMAX	8
 #define ITEMSIZEMAX	60
@@ -61,7 +62,7 @@ typedef struct
     uint8_t volCheckReq				: 1;
     uint8_t adcOnoff				: 1;
 	uint8_t moduleRstFlag			: 1;
-
+	uint8_t mode4NoNetFlag			: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;
@@ -104,6 +105,7 @@ typedef struct
 	uint8_t tiltNormalCnt;
 
 	uint8_t irqTick;
+	uint16_t mode4NoNetTick;
 
 	
 } SystemInfoTypedef;
@@ -134,5 +136,8 @@ void strToUppper(char *data, uint16_t len);
 void updateRTCtimeRequest(void);
 void byteArrayInvert(uint8 *data, uint8 dataLen);
 void stringToLowwer(char *str, uint16_t strlen);
+void showByteData(uint8_t *mark, uint8_t *buf, uint16_t len);
+
+
 
 #endif
