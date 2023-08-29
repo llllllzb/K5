@@ -22,7 +22,7 @@
 #define BOOT_PARAM_FLAG         0xB0
 
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.1.0"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.1.1"
 
 
 #define JT808_PROTOCOL_TYPE			8

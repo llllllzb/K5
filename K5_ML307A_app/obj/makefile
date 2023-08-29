@@ -40,7 +40,7 @@ endif
 
 # Add inputs and outputs from these tool invocations to the build variables 
 SECONDARY_FLASH += \
-K5_app.hex \
+K5_app.hexAndbin \
 
 SECONDARY_LIST += \
 K5_app.lst \
@@ -56,8 +56,8 @@ all: K5_app.elf secondary-outputs
 K5_app.elf: $(OBJS) $(USER_OBJS)
 	@	@	riscv-none-embed-gcc -march=rv32imac -mabi=ilp32 -mcmodel=medany -msmall-data-limit=8 -mno-save-restore -Os -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections  -g -T "../Ld/Link.ld" -nostartfiles -Xlinker --gc-sections -L"../" -L"R:\CODE\CHcode\CH582\K5_ML307A\K5_ML307A_app\LIB" -L"../StdPeriphDriver" -Xlinker --print-memory-usage -Wl,-Map,"K5_app.map" --specs=nano.specs -u _printf_float --specs=nosys.specs -o "K5_app.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@	@
-K5_app.hex: K5_app.elf
-	@	riscv-none-embed-objcopy -O ihex "K5_app.elf"  "K5_app.hex"
+K5_app.hexAndbin: K5_app.elf
+	@	riscv-none-embed-objcopy -O ihex "K5_app.elf"  "K5_app.hex" && riscv-none-embed-objcopy -O binary "K5_app.elf"  "K5_app.bin"
 	@	@
 K5_app.lst: K5_app.elf
 	@	riscv-none-embed-objdump --all-headers --demangle --disassemble "K5_app.elf" > "K5_app.lst"
@@ -65,12 +65,17 @@ K5_app.lst: K5_app.elf
 K5_app.siz: K5_app.elf
 	@	riscv-none-embed-size --format=berkeley "K5_app.elf"
 	@	@
+	$(MAKE) --no-print-directory post-build
+
 # Other Targets
 clean:
 	-$(RM) $(ASM_UPPER_DEPS)$(OBJS)$(SECONDARY_FLASH)$(SECONDARY_LIST)$(SECONDARY_SIZE)$(ASM_DEPS)$(S_DEPS)$(S_UPPER_DEPS)$(C_DEPS) K5_app.elf
 	-@
+post-build:
+	-riscv-none-embed-objcopy -O ihex "K5_app.elf" "K5_app.hex" && riscv-none-embed-objcopy -O binary "K5_app.elf" "K5_app.bin"
+	-@
 secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
 
-.PHONY: all clean dependents
+.PHONY: all clean dependents post-build
 
 -include ../makefile.targets

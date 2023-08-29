@@ -177,6 +177,7 @@ void gpsRequestClear(uint32_t flag);
 uint32_t gpsRequestGet(uint32_t flag);
 void gpsTcpSendRequest(void);
 
+void motionClear(void);
 
 uint8_t gpsInWait(void);
 

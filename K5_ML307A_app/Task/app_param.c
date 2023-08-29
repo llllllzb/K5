@@ -94,7 +94,7 @@ void paramDefaultInit(uint8_t level)
     dynamicParam.noNmeaRstCnt = 0;
     sysparam.sosalm = ALARM_TYPE_NONE;
     sysparam.ldrEn = 1;
-    sysparam.tiltalm = 1;
+    sysparam.tiltalm = 0;
     sysparam.gsdettime=0;
     sysparam.gsValidCnt=0;
     sysparam.gsInvalidCnt=0;

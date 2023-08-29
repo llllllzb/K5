@@ -34,6 +34,8 @@
 #define GSPWR_ON        portGsensorPwrCtl(1)
 #define GSPWR_OFF       portGsensorPwrCtl(0)
 #define GSINT_PIN       GPIO_Pin_12		//PB12
+#define GSINT_DET		(GPIOB_ReadPortPin(GSINT_PIN)?1:0)
+
 //IIC 涉及IO
 #define SCL_PIN         GPIO_Pin_14
 #define SDA_PIN         GPIO_Pin_15
@@ -62,7 +64,7 @@
 #define MICINT_PIN		GPIO_Pin_8		//PA8（与ADCPIN相同）
 
 #define VCARD_ADCPIN	GPIO_Pin_8
-#define ADC_CHANNEL		CH_EXTIN_13
+#define ADC_CHANNEL		CH_EXTIN_12
 
 //LDR 涉及IO
 #define LDR_PIN			GPIO_Pin_9 //PA9

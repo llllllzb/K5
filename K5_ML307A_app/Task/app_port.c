@@ -565,8 +565,17 @@ void GPIOB_IRQHandler(void)
     iqr = GPIOB_ReadITFlagPort();
     if (iqr & GSINT_PIN)
     {
-        motionOccur();
+        motionInfo.tapInterrupt++;
+        sysinfo.doMotionFlag = 1;
         GPIOB_ClearITFlagBit(GSINT_PIN);
+       	if (GPIOB_ReadPortPin(GSINT_PIN)) 
+		{
+        	GPIOB_ResetBits(GSINT_PIN);
+	    }
+	    else
+	    {
+	        GPIOB_SetBits(GSINT_PIN);
+	    }
     }
 
 }
@@ -591,7 +600,21 @@ void portGpioWakeupIRQHandler(void)
 				tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
 			}
 		}
-	}	
+	}
+	if (sysinfo.doMotionFlag)
+	{
+//		portDebugUartCfg(1);
+//		LogMessage(DEBUG_ALL, "devic moving..");
+
+		/*¿ªÆôÈÎÎñ*/
+		if (sysinfo.kernalRun == 0)
+		{
+			wakeUpByInt(2, 3);
+			tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+		}
+		sysinfo.doMotionFlag = 0;
+		
+	}
 }
 
 
@@ -987,10 +1010,19 @@ void portGsensorCtl(uint8_t onoff)
         GSPWR_ON;
         mir3da_init();
 
-		//PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
-        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PD);
+		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
+        GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_Floating);
         GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_RiseEdge);
+        if (GPIOB_ReadPortPin(GSINT_PIN)) 
+		{
+        	GPIOB_ResetBits(GSINT_PIN);
+	    }
+	    else
+	    {
+	        GPIOB_SetBits(GSINT_PIN);
+	    }
         PFIC_EnableIRQ(GPIO_B_IRQn);
+        motionClear();
     }
     else
     {

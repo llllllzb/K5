@@ -809,24 +809,26 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
     if (newState)
     {
         netResetCsqSearch();
-        if (sysparam.gpsuploadgap != 0)
-        {
+//        if (sysparam.gpsuploadgap != 0)
+//        {
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX)
             {
                 gpsRequestSet(GPS_REQUEST_ACC_CTL);
             }
-        }
+//        }
+        
         terminalAccon();
         hiddenServerCloseClear();
     }
     else
     {
-        if (sysparam.gpsuploadgap != 0)
-        {
+//        if (sysparam.gpsuploadgap != 0)
+//        {
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             gpsRequestClear(GPS_REQUEST_ACC_CTL);
-        }
+//        }
+        
         terminalAccoff();
         updateRTCtimeRequest();
     }
@@ -915,6 +917,12 @@ static uint16_t motionCheckOut(uint8_t sec)
         }
     }
     return validCnt;
+}
+
+void motionClear(void)
+{
+	LogMessage(DEBUG_ALL, "motionClear==>OK");
+	memset(motionInfo.tapCnt, 0, sizeof(motionInfo.tapCnt));
 }
 
 /**************************************************
@@ -1123,6 +1131,8 @@ static void voltageCheckTask(void)
     x = portGetAdcVol(ADC_CHANNEL);
     sysinfo.outsidevoltage = x * sysparam.adccal;
     sysinfo.insidevoltage = sysinfo.outsidevoltage;
+
+    //LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f", x, sysinfo.outsidevoltage);
 
 	//电池保护
     if (sysinfo.outsidevoltage < 2.4 && sysinfo.canRunFlag == 1)
@@ -1597,17 +1607,6 @@ static void sysRunTimeCnt(void)
     }
 }
 
-static void sysMode2Sleep(void)
-{
-	if (sysinfo.sleep)
-	{
-		portAdcCfg(0);
-	}
-	else
-	{
-		portAdcCfg(1);
-	}
-}
 
 /**************************************************
 @bref		模式运行
@@ -1634,7 +1633,6 @@ static void modeRun(void)
         case MODE2:
             //该模式下每隔3分钟记录时长
             sysRunTimeCnt();
-            //sysMode2Sleep();
             gpsUploadPointToServer();
             break;
         case MODE21:
@@ -1719,10 +1717,19 @@ static void modeDone(void)
     }
     else if (sysparam.MODE == MODE23 || sysparam.MODE == MODE21)
     {
-//		/*检测gsensor是否有中断进来*/
-//		LogPrintf(DEBUG_ALL, "ROLL_DET:%d, motionTick:%d ", ROLL_DET, motionTick);
+		/*检测gsensor是否有中断进来*/
+		//LogPrintf(DEBUG_ALL, "motioncnt:%d, motionTick:%d ", motionCheckOut(sysparam.gsdettime), motionTick);
+		if (motionCheckOut(sysparam.gsdettime) <= 1)
+		{
+			if (sysinfo.sleep)
+			{
+				tmos_set_event(sysinfo.taskId, APP_TASK_STOP_EVENT);
+				motionTick = 0;
+			}
+
+		}
 //		/*高电平，运动*/
-//		if (ROLL_DET)
+//		if (GSINT_DET)
 //		{
 //			motionTick = 0;
 //		}
@@ -1739,7 +1746,6 @@ static void modeDone(void)
 //			}
 //		}
     }
-
 }
 
 /**************************************************
@@ -2534,6 +2540,7 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
     	portDebugUartCfg(1);
         LogMessage(DEBUG_ALL, "Task kernal stop");
         sysinfo.kernalRun = 0;
+        motionClear();
         /*关闭所有IO*/
 		portAdcCfg(0);
 		portModuleGpioCfg(0);
