@@ -102,6 +102,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.debug = 0;
     sysparam.agpsen = 1;
     dynamicParam.debug = 0;
+    sysparam.mode4Alarm = 1200;
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -113,6 +114,11 @@ void paramInit(void)
     if (sysparam.VERSION != APP_PARAM_FLAG)
     {
         paramDefaultInit(0);
+    }
+   	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
+    {
+		sysparam.otaParamFlag = OTA_PARAM_FLAG;
+		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
     dbInfoRead();

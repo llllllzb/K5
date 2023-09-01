@@ -1222,8 +1222,8 @@ static void changeModeFsm(uint8_t fsm)
 
 static void modeShutDownQuickly(void)
 {
-    static uint8_t delaytick = 0;
-    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0)
+    static uint16_t delaytick = 0;
+    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && isModuleRunNormal())
     {
         delaytick++;
         if (delaytick >= 20)
@@ -1240,6 +1240,54 @@ static void modeShutDownQuickly(void)
 }
 
 /**************************************************
+@bref		mode4切回在网模式
+@param
+@return
+@note
+**************************************************/
+
+static void mode4CloseSocketQuickly(void)
+{
+	static uint16_t tick = 0;
+	
+	if (isModuleRunNormal())
+	{
+		if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && sysinfo.netRequest == 0)
+		{
+			tick++;
+			if (tick >= 15)
+			{
+				LogMessage(DEBUG_ALL, "mode4CloseSocketQuickly==>On net");
+				changeMode4Callback();
+				tick = 0;
+			}
+		}
+		else
+		{
+			tick = 0;
+		}
+		sysinfo.nonetTick = 0;
+	}
+	else if (isModuleRunNormal() == 0 && isModuleOfflineStatus() == 0)
+	{
+		sysinfo.nonetTick++;
+		tick = 0;
+		LogPrintf(DEBUG_ALL, "sysinfo.nonetTick:%d", sysinfo.nonetTick);
+		if (sysinfo.nonetTick >= 270)
+		{
+			sysinfo.nonetTick = 0;
+			LogMessage(DEBUG_ALL, "mode4CloseSocketQuickly==>Shut down");
+			modeTryToStop();
+		}
+	}
+	else
+	{
+		sysinfo.nonetTick = 0;
+		tick = 0;
+	}
+}
+
+/**************************************************
 @bref		运行-》关机
 @param
 @return
@@ -1252,6 +1300,7 @@ void modeTryToStop(void)
     sysinfo.alarmRequest = 0;
     sysinfo.wifiRequest = 0;
     sysinfo.lbsRequest = 0;
+    netRequestClear();
     changeModeFsm(MODE_STOP);
     LogMessage(DEBUG_ALL, "modeTryToStop");
 }
@@ -1269,6 +1318,7 @@ void modeTryToDone(void)
     sysinfo.alarmRequest = 0;
     sysinfo.wifiRequest = 0;
     sysinfo.lbsRequest = 0;
+    netRequestClear();
     changeModeFsm(MODE_DONE);
     LogMessage(DEBUG_ALL, "modeTryToDone");
 }
@@ -1385,145 +1435,148 @@ void bleTryInit(void)
 
 static void modeChoose(void)
 {
-	static uint8_t flag = 0;
 
-    if (sysparam.MODE != MODE1 && sysparam.MODE != MODE3)
-    {
-        bleChangeFsm(BLE_IDLE);
-        changeModeFsm(MODE_START);
-        return;
-    }
-    if (sysinfo.alarmRequest != 0)
-    {
-        bleChangeFsm(BLE_IDLE);
-        changeModeFsm(MODE_START);
-        return;
-    }
-    if (sysinfo.first == 0)
-    {
-		sysinfo.first = 1;
-		bleChangeFsm(BLE_IDLE);
-        changeModeFsm(MODE_START);
-        return;
-    }
-    if (sysparam.bleLinkFailCnt == 0)
-    {
-		bleChangeFsm(BLE_IDLE);
-        changeModeFsm(MODE_START);
-//        dynamicParam.bleLinkCnt = 0;
-//        dynamicParamSaveAll();
-        return;
-    }
-    if (flag == 0)
-    {
-    	flag = 1;
-		portFsclkChange(1);
-    }
-    switch (bleTry.runFsm)
-    {
-        case BLE_IDLE:
-            dynamicParam.startUpCnt++;
-            dynamicParam.bleLinkCnt++;
-            dynamicParamSaveAll();
-            wakeUpByInt(2, 30);
-            ledStatusUpdate(SYSTEM_LED_BLE, 1);
-             
-            portSetNextAlarmTime();
-            bleChangeFsm(BLE_SCAN);
-            bleTry.scanCnt = 0;
-            
-            break;
-        case BLE_SCAN:
-            bleTry.connCnt = 0;
-            if (bleTry.scanCnt++ < 3)
-            {
-                //启动扫描
-                centralStartDisc();
-                bleChangeFsm(BLE_SCAN_WAIT);
-            }
-            else
-            {
-                bleTry.scanCnt = 0;
-                //扫描失败
-                if (dynamicParam.bleLinkCnt >= sysparam.bleLinkFailCnt)
-                {
-                    LogPrintf(DEBUG_ALL, "scan fail==>%d", dynamicParam.bleLinkCnt);
-                    alarmRequestSet(ALARM_BLEALARM_REQUEST);
-                    dynamicParam.bleLinkCnt = 0;
-                    dynamicParamSaveAll();
-                    changeModeFsm(MODE_START);
-                    bleChangeFsm(BLE_IDLE);
-                    flag = 0;
-                }
-                else
-                {
-                    LogPrintf(DEBUG_ALL, "scan cnt==>%d", dynamicParam.bleLinkCnt);
-                    bleChangeFsm(BLE_DONE);
-                }
-
-            }
-            break;
-        case BLE_SCAN_WAIT:
-            //等待扫描结果
-            if (++bleTry.runTick >= 12)
-            {
-                bleChangeFsm(BLE_SCAN);
-            }
-            break;
-        case BLE_CONN:
-            //开始建立连接
-            if (bleTry.connCnt++ < 3)
-            {
-                centralEstablish(bleTry.mac, bleTry.addrType);
-                bleChangeFsm(BLE_CONN_WAIT);
-            }
-            else
-            {
-                bleTry.connCnt = 0;
-                if (dynamicParam.bleLinkCnt >= sysparam.bleLinkFailCnt)
-                {
-                    LogPrintf(DEBUG_ALL, "conn fail==>%d", dynamicParam.bleLinkCnt);
-                    dynamicParam.bleLinkCnt = 0;
-                    alarmRequestSet(ALARM_BLEALARM_REQUEST);
-                    dynamicParamSaveAll();
-                    changeModeFsm(MODE_START);
-                    bleChangeFsm(BLE_IDLE);
-                    flag = 0;
-                }
-                else
-                {
-                    bleChangeFsm(BLE_DONE);
-                }
-            }
-            break;
-        case BLE_CONN_WAIT:
-            //等待连接结果
-            if (++bleTry.runTick >= 12)
-            {
-                centralTerminate();
-                bleChangeFsm(BLE_CONN);
-            }
-            break;
-        case BLE_READY:
-            //蓝牙连接成功
-            if (++bleTry.runTick >= 20)
-            {
-                centralTerminate();
-                bleChangeFsm(BLE_DONE);
-            }
-            break;
-        case BLE_DONE:
-            POWER_OFF;
-            ledStatusUpdate(SYSTEM_LED_BLE, 0);
-            bleChangeFsm(BLE_IDLE);
-            changeModeFsm(MODE_DONE);
-            gpsRequestClear(GPS_REQUEST_ALL);
-            flag = 0;
-            break;
-        default:
-            bleChangeFsm(BLE_IDLE);
-            break;
-    }
+	bleChangeFsm(BLE_IDLE);
+    changeModeFsm(MODE_START);
+//	static uint8_t flag = 0;
+//
+//    if (sysparam.MODE != MODE1 && sysparam.MODE != MODE3)
+//    {
+//        bleChangeFsm(BLE_IDLE);
+//        changeModeFsm(MODE_START);
+//        return;
+//    }
+//    if (sysinfo.alarmRequest != 0)
+//    {
+//        bleChangeFsm(BLE_IDLE);
+//        changeModeFsm(MODE_START);
+//        return;
+//    }
+//    if (sysinfo.first == 0)
+//    {
+//		sysinfo.first = 1;
+//		bleChangeFsm(BLE_IDLE);
+//        changeModeFsm(MODE_START);
+//        return;
+//    }
+//    if (sysparam.bleLinkFailCnt == 0)
+//    {
+//		bleChangeFsm(BLE_IDLE);
+//        changeModeFsm(MODE_START);
+////        dynamicParam.bleLinkCnt = 0;
+////        dynamicParamSaveAll();
+//        return;
+//    }
+//    if (flag == 0)
+//    {
+//    	flag = 1;
+//		portFsclkChange(1);
+//    }
+//    switch (bleTry.runFsm)
+//    {
+//        case BLE_IDLE:
+//            dynamicParam.startUpCnt++;
+//            dynamicParam.bleLinkCnt++;
+//            dynamicParamSaveAll();
+//            wakeUpByInt(2, 30);
+//            ledStatusUpdate(SYSTEM_LED_BLE, 1);
+//             
+//            portSetNextAlarmTime();
+//            bleChangeFsm(BLE_SCAN);
+//            bleTry.scanCnt = 0;
+//            
+//            break;
+//        case BLE_SCAN:
+//            bleTry.connCnt = 0;
+//            if (bleTry.scanCnt++ < 3)
+//            {
+//                //启动扫描
+//                centralStartDisc();
+//                bleChangeFsm(BLE_SCAN_WAIT);
+//            }
+//            else
+//            {
+//                bleTry.scanCnt = 0;
+//                //扫描失败
+//                if (dynamicParam.bleLinkCnt >= sysparam.bleLinkFailCnt)
+//                {
+//                    LogPrintf(DEBUG_ALL, "scan fail==>%d", dynamicParam.bleLinkCnt);
+//                    alarmRequestSet(ALARM_BLEALARM_REQUEST);
+//                    dynamicParam.bleLinkCnt = 0;
+//                    dynamicParamSaveAll();
+//                    changeModeFsm(MODE_START);
+//                    bleChangeFsm(BLE_IDLE);
+//                    flag = 0;
+//                }
+//                else
+//                {
+//                    LogPrintf(DEBUG_ALL, "scan cnt==>%d", dynamicParam.bleLinkCnt);
+//                    bleChangeFsm(BLE_DONE);
+//                }
+//
+//            }
+//            break;
+//        case BLE_SCAN_WAIT:
+//            //等待扫描结果
+//            if (++bleTry.runTick >= 12)
+//            {
+//                bleChangeFsm(BLE_SCAN);
+//            }
+//            break;
+//        case BLE_CONN:
+//            //开始建立连接
+//            if (bleTry.connCnt++ < 3)
+//            {
+//                centralEstablish(bleTry.mac, bleTry.addrType);
+//                bleChangeFsm(BLE_CONN_WAIT);
+//            }
+//            else
+//            {
+//                bleTry.connCnt = 0;
+//                if (dynamicParam.bleLinkCnt >= sysparam.bleLinkFailCnt)
+//                {
+//                    LogPrintf(DEBUG_ALL, "conn fail==>%d", dynamicParam.bleLinkCnt);
+//                    dynamicParam.bleLinkCnt = 0;
+//                    alarmRequestSet(ALARM_BLEALARM_REQUEST);
+//                    dynamicParamSaveAll();
+//                    changeModeFsm(MODE_START);
+//                    bleChangeFsm(BLE_IDLE);
+//                    flag = 0;
+//                }
+//                else
+//                {
+//                    bleChangeFsm(BLE_DONE);
+//                }
+//            }
+//            break;
+//        case BLE_CONN_WAIT:
+//            //等待连接结果
+//            if (++bleTry.runTick >= 12)
+//            {
+//                centralTerminate();
+//                bleChangeFsm(BLE_CONN);
+//            }
+//            break;
+//        case BLE_READY:
+//            //蓝牙连接成功
+//            if (++bleTry.runTick >= 20)
+//            {
+//                centralTerminate();
+//                bleChangeFsm(BLE_DONE);
+//            }
+//            break;
+//        case BLE_DONE:
+//            POWER_OFF;
+//            ledStatusUpdate(SYSTEM_LED_BLE, 0);
+//            bleChangeFsm(BLE_IDLE);
+//            changeModeFsm(MODE_DONE);
+//            gpsRequestClear(GPS_REQUEST_ALL);
+//            flag = 0;
+//            break;
+//        default:
+//            bleChangeFsm(BLE_IDLE);
+//            break;
+//    }
 }
 
 
@@ -1546,6 +1599,15 @@ static void modeStart(void)
     sysinfo.gpsuploadonepositiontime = 180;
     updateRTCtimeRequest();
     portFsclkChange(0);
+    if (sysinfo.mode4First == 0)
+    {
+		sysinfo.mode4First = 1;
+		lbsRequestSet(DEV_EXTEND_OF_MY);
+    	gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+    	netRequestSet();
+		
+    }
+    sysinfo.nonetTick = 0;
     switch (sysparam.MODE)
     {
         case MODE1:
@@ -1576,9 +1638,10 @@ static void modeStart(void)
         /*离线模式*/
         case MODE4:
 			portGsensorCtl(0);
-
 		    modulePowerOn();
 		    netResetCsqSearch();
+		    portSetNextAlarmTime();
+		    portSetNextMode4AlarmTime();
 		    changeModeFsm(MODE_RUNING);
         	return;
         default:
@@ -1644,7 +1707,7 @@ static void modeRun(void)
             break;
         case MODE4:
 			sysRunTimeCnt();
-			
+			mode4CloseSocketQuickly();
         	break;
         default:
             LogMessage(DEBUG_ALL, "mode change unknow");
@@ -1681,20 +1744,11 @@ static void modeStop(void)
 
 static void modeDone(void)
 {
-    static uint16_t runTick = 0;
 	static uint8_t motionTick = 0;
-    if (sysparam.MODE == MODE2)
-    {
-        runTick++;
-    }
-    else
-   	{
-   		runTick = 0;
-   	}
+
 	bleTryInit();
-    if (sysinfo.gpsRequest || runTick >= 7200)
+    if (sysinfo.gpsRequest)
     {
-        runTick = 0;
         motionTick = 0;
         volCheckRequestSet();
         if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3)
@@ -1715,7 +1769,7 @@ static void modeDone(void)
             tmos_set_event(sysinfo.taskId, APP_TASK_STOP_EVENT);
         }
     }
-    else if (sysparam.MODE == MODE23 || sysparam.MODE == MODE21)
+    else if (sysparam.MODE == MODE23 || sysparam.MODE == MODE21 || sysparam.MODE == MODE2)
     {
 		/*检测gsensor是否有中断进来*/
 		//LogPrintf(DEBUG_ALL, "motioncnt:%d, motionTick:%d ", motionCheckOut(sysparam.gsdettime), motionTick);
@@ -1774,7 +1828,7 @@ uint8_t isModeRun(void)
 
 uint8_t isModeDone(void)
 {
-    if (sysinfo.runFsm == MODE_DONE)
+    if (sysinfo.runFsm == MODE_DONE || sysinfo.runFsm == MODE_STOP)
         return 1;
     return 0;
 }
@@ -1808,10 +1862,23 @@ static void sysAutoReq(void)
     }
     else if (sysparam.MODE == MODE4)
     {
+    	portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
+        if (hour == sysinfo.mode4alarmHour && minute == sysinfo.mode4alarmMinute)
+        {
+            LogPrintf(DEBUG_ALL, "sysAutoReq==>MODE4:%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
+            gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+            netRequestSet();
+            if (sysinfo.kernalRun == 0)
+            {
+            	volCheckRequestSet();
+                tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+            }
+        }
 		if (isModeDone())
 		{
 			sysinfo.mode4NoNetTick++;
-			if (sysinfo.mode4NoNetTick >= sysparam.mode4WakeupMin)
+			LogPrintf(DEBUG_ALL, "mode4NoNetTick:%d", sysinfo.mode4NoNetTick);
+			if (sysinfo.mode4NoNetTick >= 5)
 			{
 				sysinfo.mode4NoNetTick = 0;
                 LogMessage(DEBUG_ALL, "mode 4 restoration network");
@@ -1819,6 +1886,7 @@ static void sysAutoReq(void)
                 {
                 	volCheckRequestSet();
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+                    changeModeFsm(MODE_START);
                 }
 			}
 		}
@@ -2316,8 +2384,7 @@ static void lightDetectionTask(void)
 			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
 			jt808UpdateAlarm(JT808_LIGHT_ALARM, 1);
 			lbsRequestSet(DEV_EXTEND_OF_MY);
-			wifiRequestSet(DEV_EXTEND_OF_MY);
-			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);			
+			wifiRequestSet(DEV_EXTEND_OF_MY);		
 		}
 		else
 		{
@@ -2457,7 +2524,7 @@ void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
     paramInit();
-    sysinfo.logLevel = 9;
+    //sysinfo.logLevel = 9;
     SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portModuleGpioCfg(1);

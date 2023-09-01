@@ -63,6 +63,7 @@ typedef struct
     uint8_t adcOnoff				: 1;
 	uint8_t moduleRstFlag			: 1;
 	uint8_t mode4NoNetFlag			: 1;
+	uint8_t mode4First				: 1;
     uint8_t lbsExtendEvt;
     uint8_t wifiExtendEvt;
     uint8_t ringWakeUpTick;
@@ -106,7 +107,12 @@ typedef struct
 
 	uint8_t irqTick;
 	uint16_t mode4NoNetTick;
+	uint8_t netRequest;
 
+	uint8_t mode4alarmDate;
+    uint8_t mode4alarmHour;
+    uint8_t mode4alarmMinute;
+    uint16_t nonetTick;
 	
 } SystemInfoTypedef;
 

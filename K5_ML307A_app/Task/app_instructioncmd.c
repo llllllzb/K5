@@ -167,7 +167,14 @@ static void doParamInstruction(ITEM *item, char *message)
             sprintf(message + strlen(message), "Mode23: %d minutes;", sysparam.gapMinutes);
             break;
        	case MODE4:
-			sprintf(message + strlen(message), "Mode4: %d M,%dM;", sysparam.gapMinutes, sysparam.mode4WakeupMin);
+       		if (sysparam.mode4Alarm != 0xFFFF)
+       		{
+				sprintf(message + strlen(message), "Mode%d,TimeAlarm==>Time:%.2d:%.2d;", sysparam.MODE, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
+			}
+			else
+			{
+				sprintf(message + strlen(message),"Mode%d, TimeAlarm==>Disable;", sysparam.MODE);
+			}
        		break;
     }
 
@@ -268,12 +275,20 @@ static void doModeInstruction(ITEM *item, char *message)
 {
     uint8_t workmode, i, j, timecount = 0, gapday = 1;
     uint16_t mode1time[7];
+    uint16_t mode4time;
     uint16_t valueofminute;
     if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
     {
     	if (sysparam.MODE == MODE4)
     	{
-			sprintf(message, "Mode%d,mode4WakeupMin%d", sysparam.MODE, sysparam.mode4WakeupMin);
+			if (sysparam.mode4Alarm != 0xFFFF)
+       		{
+				sprintf(message + strlen(message), "Mode%d,TimeAlarm==>Time:%.2d:%.2d", sysparam.MODE, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
+			}
+			else
+			{
+				sprintf(message + strlen(message),"Mode%d, TimeAlarm==>Disable");
+			}
     	}
     	else
     	{
@@ -334,7 +349,7 @@ static void doModeInstruction(ITEM *item, char *message)
 					gapday = 1;
                 }
                 sysparam.gapDay = gapday;
-                if (workmode == MODE1)
+                if (workmode == 1)
                 {
                     terminalAccoff();
                     if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
@@ -416,10 +431,10 @@ static void doModeInstruction(ITEM *item, char *message)
             case 3:
             case 23:
                 sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
-//                if (sysparam.gapMinutes < 5)
-//                {
-//                    sysparam.gapMinutes = 5;
-//                }
+                if (sysparam.gapMinutes < 5)
+                {
+                    sysparam.gapMinutes = 5;
+                }
 				if(sysparam.gapMinutes >= 10080 )
 				{
 					sysparam.gapMinutes = 10080;
@@ -445,15 +460,44 @@ static void doModeInstruction(ITEM *item, char *message)
                 break;
 
             case 4:
-				if (item->item_data[2][0] != 0)
+				if (item->item_cnt > 2)
 				{
-					sysparam.mode4WakeupMin = (uint16_t)atoi(item->item_data[2]);
-				}
-				if (sysparam.mode4WakeupMin == 0)
-				{
-					sysparam.mode4WakeupMin = 60;
+					if (strlen(item->item_data[2]) <= 4 && strlen(item->item_data[2]) >= 3)
+					{
+						valueofminute = atoi(item->item_data[2]);
+						mode4time = valueofminute / 100 * 60 + valueofminute % 100;
+						sysparam.mode4Alarm = mode4time;
+					}
+					else
+					{
+						if (atoi(item->item_data[2]) == 0)
+						{
+							sysparam.mode4Alarm = 0xFFFF;
+						}
+						else
+						{
+							sysparam.MODE = MODE4;
+							terminalAccoff();
+			                if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
+			                {
+			                    gpsRequestClear(GPS_REQUEST_ACC_CTL);
+			                }
+			                gpsRequestClear(GPS_REQUEST_ALL);
+			                lbsRequestClear();
+			                wifiRequestClear();
+			                agpsRequestClear();
+			                portGsensorCtl(0);
+			                startTimer(50, changeMode4Callback, 0);
+							sprintf(message, "Change to mode %d ,and please enter right param", workmode);
+							break;
+						}
+					}
 				}
 				sysparam.MODE = MODE4;
+				if (sysparam.mode4Alarm != 0xFFFF)
+				{
+					portSetNextMode4AlarmTime();
+				}
 				terminalAccoff();
                 if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
                 {
@@ -465,7 +509,14 @@ static void doModeInstruction(ITEM *item, char *message)
                 agpsRequestClear();
                 portGsensorCtl(0);
                 startTimer(50, changeMode4Callback, 0);
-                sprintf(message, "Change to mode %d and update the sleep time to%d min", workmode, sysparam.mode4WakeupMin);
+                if (sysparam.mode4Alarm != 0xFFFF)
+                {
+                	sprintf(message, "Change to mode %d and wakeup at %.2d:%.2d", workmode, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
+                }
+                else
+                {
+					sprintf(message, "Change to mode %d and diable wakeup time", workmode);
+                }
             	break;
             default:
                 strcpy(message, "Unsupport mode");

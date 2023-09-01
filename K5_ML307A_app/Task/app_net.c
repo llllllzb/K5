@@ -117,7 +117,7 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     }
     else
     {
-		wakeUpByInt(1, 15);
+		wakeUpByInt(1, 8);
     }
     if (headNode == NULL)
     {
@@ -603,6 +603,32 @@ static void queryRecvBuffer(void)
 }
 
 /**************************************************
+@bref		网络请求设置
+@param
+@return
+@note
+**************************************************/
+
+void netRequestSet(void)
+{
+	sysinfo.netRequest = 1;
+	LogPrintf(DEBUG_ALL, "netRequestSet==>OK");
+}
+
+/**************************************************
+@bref		网络请求清除
+@param
+@return
+@note
+**************************************************/
+
+void netRequestClear(void)
+{
+	sysinfo.netRequest = 0;
+	LogPrintf(DEBUG_ALL, "netRequestClear==>OK");
+}
+
+/**************************************************
 @bref		联网准备任务
 @param
 @return
@@ -700,11 +726,7 @@ void netConnectTask(void)
                     {
                         moduleCtrl.csqCount = 0;
                         //3次搜索不到网络时，如果没有gps请求，则关机
-                        if (sysparam.MODE == MODE4)
-                        {
-                            modeTryToStop();
-                        }
-                        else if (sysinfo.gpsRequest != 0)
+                        if (sysinfo.gpsRequest != 0)
                         {
 							moduleReset();
                         }
@@ -741,11 +763,7 @@ void netConnectTask(void)
                     {
                         moduleCtrl.cgregCount = 0;
                         //2次注册不上基站时，如果没有gps请求，则关机
-                        if (sysparam.MODE == MODE4)
-                        {
-							modeTryToStop();
-                        }
-                        else if (sysinfo.gpsRequest != 0)
+                        if (sysinfo.gpsRequest != 0)
                         {
                             moduleReset();
                         }
@@ -774,7 +792,7 @@ void netConnectTask(void)
 			sendModuleCmd(MCFG_CMD, "ri,1");
 			queryTemperture();
 			queryBatVoltage();
-            if (sysparam.MODE == MODE4)
+            if (sysparam.MODE == MODE4 && sysinfo.netRequest == 0)
             {
 				moduleSleepCtl(1);
 				changeProcess(OFFLINE_STATUS);
@@ -818,7 +836,7 @@ void netConnectTask(void)
             queryRecvBuffer();
             break;
         case OFFLINE_STATUS:
-			if (sysparam.MODE != MODE4)
+			if (sysparam.MODE != MODE4 || sysinfo.netRequest != 0)
 			{
 				gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
 				changeProcess(CPIN_STATUS);
@@ -1382,6 +1400,7 @@ static void mipcallParser(uint8_t *buf, uint16_t len)
     else 
     {
         moduleState.qipactOk = 0;
+        changeProcess(CPIN_STATUS);
     }
 }
 /**************************************************
@@ -2113,7 +2132,7 @@ void moduleRecvParser(uint8_t *buf, uint16_t bufsize)
     memcpy(dataRestore + len, buf, bufsize);
     len += bufsize;
     dataRestore[len] = 0;
-//            uint8_t debug[1000];
+//        uint8_t debug[1000];
 //        byteToHexString(dataRestore, debug, len);
 //        debug[len * 2]=0;
 //        LogMessage(DEBUG_ALL, "<<<<<<<<<");

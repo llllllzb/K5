@@ -214,6 +214,8 @@ void moduleReset(void);
 
 void openSocket(uint8_t link, char *server, uint16_t port);
 void closeSocket(uint8_t link);
+void netRequestSet(void);
+void netRequestClear(void);
 
 void netConnectTask(void);
 void moduleRecvParser(uint8_t *buf, uint16_t bufsize);

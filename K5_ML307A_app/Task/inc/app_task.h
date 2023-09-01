@@ -171,6 +171,7 @@ void ledStatusUpdate(uint8_t status, uint8_t onoff);
 void lbsRequestClear(void);
 
 void wifiRequestClear(void);
+void saveGpsHistory(void);
 
 void gpsRequestSet(uint32_t flag);
 void gpsRequestClear(uint32_t flag);
