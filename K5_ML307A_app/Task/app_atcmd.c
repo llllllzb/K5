@@ -427,6 +427,26 @@ static void atCmdFmpcExtvolParser(void)
 }
 
 /**************************************************
+@bref		FMPC_EXTVOL ÷∏¡Ó
+@param
+@return
+@note
+**************************************************/
+
+static void atCmdFMPCLdrParase(void)
+{
+    if (LDR_READ)
+    {
+        LogMessage(DEBUG_FACTORY, "Light sensor detects darkness\n");
+    }
+    else
+    {
+        LogMessage(DEBUG_FACTORY, "Light sensor detects brightness\n");
+
+    }
+}
+
+/**************************************************
 @bref		AT ÷∏¡ÓΩ‚Œˆ
 @param
 @return
@@ -508,6 +528,9 @@ void atCmdParserFunction(uint8_t *buf, uint16_t len)
                     case AT_FMPC_EXTVOL_CMD:
                         atCmdFmpcExtvolParser();
                         break;
+                    case AT_FMPC_LDR_CMD:
+						atCmdFMPCLdrParase();
+                    	break;
                     default:
                         LogMessage(DEBUG_ALL, "Unknown Cmd");
                         break;
