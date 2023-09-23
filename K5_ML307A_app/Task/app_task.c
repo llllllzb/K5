@@ -559,8 +559,6 @@ static void gpsRequestTask(void)
             if (gpsinfo->fixstatus)
             {
                 ledStatusUpdate(SYSTEM_LED_GPSOK, 1);
-                lbsRequestClear();
-                wifiRequestClear();
                 agpsRequestClear();
             }
             else
@@ -1223,7 +1221,7 @@ static void changeModeFsm(uint8_t fsm)
 static void modeShutDownQuickly(void)
 {
     static uint16_t delaytick = 0;
-    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && isModuleRunNormal())
+    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && sysinfo.wifiExtendEvt == 0)
     {
         delaytick++;
         if (delaytick >= 20)
@@ -1252,7 +1250,7 @@ static void mode4CloseSocketQuickly(void)
 	
 	if (isModuleRunNormal())
 	{
-		if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && sysinfo.netRequest == 0)
+		if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiExtendEvt == 0 && sysinfo.lbsRequest == 0 && sysinfo.netRequest == 0)
 		{
 			tick++;
 			if (tick >= 15)
@@ -1603,9 +1601,9 @@ static void modeStart(void)
     {
 		sysinfo.mode4First = 1;
 		lbsRequestSet(DEV_EXTEND_OF_MY);
+		wifiRequestSet(DEV_EXTEND_OF_MY);
     	gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     	netRequestSet();
-		
     }
     sysinfo.nonetTick = 0;
     switch (sysparam.MODE)
@@ -1652,6 +1650,7 @@ static void modeStart(void)
     LogPrintf(DEBUG_ALL, "modeStart==>%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
     LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);
     lbsRequestSet(DEV_EXTEND_OF_MY);
+    wifiRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     
     modulePowerOn();

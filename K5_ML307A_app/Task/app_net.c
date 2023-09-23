@@ -113,7 +113,7 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     WAKEMODULE;
     if (currentcmd == MWIFISCANSTART_CMD)
     {
-		wakeUpByInt(1, 20);
+		wakeUpByInt(1, 28);
     }
     else
     {
@@ -248,7 +248,7 @@ void outputNode(void)
             }
             else if (currentnode->currentcmd == MWIFISCANSTART_CMD)
             {
-				tickRange = 75;
+				tickRange = 125;
             }
             else
             {

@@ -374,7 +374,7 @@ static void doModeInstruction(ITEM *item, char *message)
                 break;
             case 2:
                 portGsensorCtl(1);
-                sysparam.gpsuploadgap = (uint8_t)atoi((const char *)item->item_data[2]);
+                sysparam.gpsuploadgap = (uint16_t)atoi((const char *)item->item_data[2]);
                 sysparam.gapMinutes = (uint16_t)atoi((const char *)item->item_data[3]);
                 sysparam.MODE = MODE2;
                 if (sysparam.gpsuploadgap == 0)
@@ -430,18 +430,17 @@ static void doModeInstruction(ITEM *item, char *message)
                 break;
             case 3:
             case 23:
-                sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
-                if (sysparam.gapMinutes < 5)
-                {
-                    sysparam.gapMinutes = 5;
-                }
-				if(sysparam.gapMinutes >= 10080 )
-				{
-					sysparam.gapMinutes = 10080;
-				}
-
                 if (workmode == MODE3)
                 {
+                	sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
+                	if (sysparam.gapMinutes < 5)
+	                {
+	                    sysparam.gapMinutes = 5;
+	                }
+	                if (sysparam.gapMinutes >= 10080)
+					{
+						sysparam.gapMinutes = 10080;
+					}
                     terminalAccoff();
                     if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
                     {
@@ -449,16 +448,33 @@ static void doModeInstruction(ITEM *item, char *message)
                     }
                     sysparam.MODE = MODE3;
                     portGsensorCtl(0);
+                    sprintf(message, "Change to mode %d and update the startup interval time to %d minutes;", workmode,
+                        sysparam.gapMinutes);
                 }
                 else
                 {
+                	if (atoi(item->item_data[2]) != 0)
+                	{
+						sysparam.gpsuploadgap = (uint16_t)atoi((const char *)item->item_data[2]);
+                	}
+                    if (atoi(item->item_data[3]) != 0)
+                    {
+                        sysparam.gapMinutes = (uint16_t)atoi((const char *)item->item_data[3]);
+                    }
+                    if (sysparam.gapMinutes < 5)
+	                {
+	                    sysparam.gapMinutes = 5;
+	                }
+	                if (sysparam.gapMinutes >= 10080)
+					{
+						sysparam.gapMinutes = 10080;
+					}
                     sysparam.MODE = MODE23;
                     portGsensorCtl(1);
+                    sprintf(message, "Change to mode %d and update interval time to %d s %d m;", workmode, sysparam.gpsuploadgap,
+                            sysparam.gapMinutes);
                 }
-                sprintf(message, "Change to mode %d and update the startup interval time to %d minutes;", workmode,
-                        sysparam.gapMinutes);
                 break;
-
             case 4:
 				if (item->item_cnt > 2)
 				{
