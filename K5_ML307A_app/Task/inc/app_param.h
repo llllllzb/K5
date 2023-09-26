@@ -22,7 +22,7 @@
 #define BOOT_PARAM_FLAG         0xB0
 #define OTA_PARAM_FLAG          0x1A
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.1.5"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.1.6"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -110,6 +110,8 @@ typedef struct
 	uint8_t debug;
 
 	uint16_t mode4Alarm;
+	uint8_t smsreply;
+	uint8_t bf;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

@@ -395,12 +395,16 @@ void gpsUartRead(uint8_t *msg, uint16_t len)
 static void hdGpsInjectLocation(void)
 {
 	int32_t lat, lon;
+	static uint32_t agpsTick;
 	lat = dynamicParam.saveLat * 10000000;
 	lon = dynamicParam.saveLon * 10000000;
 	gnss_inject_location(lat, lon, 0, 0);
 	LogPrintf(DEBUG_ALL, "gnss_inject_location==>lat:%d lon:%d", lat, lon);
-	agpsRequestSet();
-	
+	if (agpsTick == 0 || (sysinfo.oneMinTick >= agpsTick))
+    {
+    	agpsTick = sysinfo.oneMinTick + 120;
+		agpsRequestSet();
+    }	
 }
 /**************************************************
 @bref		华大gps配置
@@ -702,6 +706,16 @@ void alarmRequestTask(void)
         alarm = 0;
         protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
     }
+    
+    //震动报警
+    if (sysinfo.alarmRequest & ALARM_SHUTTLE_REQUEST)
+    {
+        alarmRequestClear(ALARM_SHUTTLE_REQUEST);
+        LogMessage(DEBUG_ALL, "alarmRequestTask==>shuttle Alarm");
+        terminalAlarmSet(TERMINAL_WARNNING_SHUTTLE);
+        alarm = 0;
+        protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
+    }
 
     //SOS报警
     if (sysinfo.alarmRequest & ALARM_SOS_REQUEST)
@@ -748,20 +762,16 @@ void alarmRequestTask(void)
         alarm = 12;
         protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
     }
-    if (sysinfo.alarmRequest & ALARM_TILT_REQUEST)
+
+    //守卫报警
+    if (sysinfo.alarmRequest & ALARM_GUARD_REQUEST)
     {
-        alarmRequestClear(ALARM_TILT_REQUEST);
-        LogMessage(DEBUG_ALL, "alarmRequestTask==>tilt Alarm");
-        alarm = 33;
+        alarmRequestClear(ALARM_GUARD_REQUEST);
+        LogMessage(DEBUG_ALL, "alarmUploadRequest==>Guard Alarm\n");
+        alarm = 1;
         protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
     }
-    if (sysinfo.alarmRequest & ALARM_LEAVE_REQUEST)
-    {
-        alarmRequestClear(ALARM_LEAVE_REQUEST);
-        LogMessage(DEBUG_ALL, "alarmRequestTask==>leave Alarm");
-        alarm = 34;
-        protocolSend(NORMAL_LINK, PROTOCOL_16, &alarm);
-    }
+
 }
 
 
@@ -815,7 +825,10 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
                 gpsRequestSet(GPS_REQUEST_ACC_CTL);
             }
 //        }
-        
+        if (sysparam.bf)
+        {
+			alarmRequestSet(ALARM_GUARD_REQUEST);
+        }
         terminalAccon();
         hiddenServerCloseClear();
     }
@@ -1005,8 +1018,6 @@ static void motionCheckTask(void)
     {
         motionState = 0;
     }
-
-
 
     if (ACC_READ == ACC_STATE_ON)
     {
@@ -2542,7 +2553,7 @@ void myTaskPreInit(void)
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
-    //createSystemTask(tiltDetectionTask, 1);
+
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
 	LogMessage(DEBUG_ALL, ">>>>>>>>>>>>>>>>>>>>>");
     LogPrintf(DEBUG_ALL, "SYS_GetLastResetSta:%x", SYS_GetLastResetSta());
@@ -2621,11 +2632,12 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
     }
     if (events & APP_TASK_ONEMINUTE_EVENT)
     {
+    	sysinfo.oneMinTick++;
    	 	portDebugUartCfg(1);
     	sysAutoReq();
     	calculateNormalTime();
         LogMessage(DEBUG_ALL, "***************************Task one minutes**********************");
-        LogPrintf(DEBUG_ALL,  "*Mode: %d, rungap: %d, System run: %d min, darktime: %d, tilttime: %d*", sysparam.MODE, sysparam.gapMinutes, sysinfo.sysMinutes, sysinfo.ldrDarkCnt, sysinfo.tiltNormalCnt);
+        LogPrintf(DEBUG_ALL,  "*Mode: %d, rungap: %d, System run: %d min, darktime: %d, oneminute: %d*", sysparam.MODE, sysparam.gapMinutes, sysinfo.sysMinutes, sysinfo.ldrDarkCnt, sysinfo.oneMinTick);
         LogMessage(DEBUG_ALL, "*****************************************************************");
         portDebugUartCfg(0);
         return events ^ APP_TASK_ONEMINUTE_EVENT;

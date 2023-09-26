@@ -47,6 +47,9 @@ const instruction_s insCmdTable[] =
     {ALARMMODE_INS, "ALARMMODE"},
     {TILTTHRESHOLD_INS, "TILTTHRESHOLD"},
     {AGPSEN_INS, "AGPSEN"},
+    {SMSREPLY_INS, "SMSREPLY"},
+    {BF_INS, "BF"},
+    {CF_INS, "CF"},
 };
 
 static insMode_e mode123;
@@ -67,8 +70,11 @@ static void sendMsgWithMode(uint8_t *buf, uint16_t len, insMode_e mode, void *pa
         case SMS_MODE:
             if (param != NULL)
             {
-                insparam = (insParam_s *)param;
-                sendMessage(buf, len, insparam->telNum);
+            	if (sysparam.smsreply != 0)
+            	{
+	                insparam = (insParam_s *)param;
+	                sendMessage(buf, len, insparam->telNum);
+                }
                 startTimer(15, deleteAllMessage, 0);
             }
             break;
@@ -1339,6 +1345,37 @@ static void doAgpsenInstrution(ITEM *item, char *message)
 	}
 }
 
+static void doSmsReplyInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Sms replies is %s", sysparam.smsreply ? "Enable" : "Disable");
+	}
+	else
+	{
+		sysparam.smsreply = atoi(item->item_data[1]);
+		sprintf(message, "Sms replies is %s", sysparam.smsreply ? "Enable" : "Disable");
+		paramSaveAll();
+	}
+}
+
+void doBFInstruction(ITEM *item, char *message)
+{
+    terminalDefense();
+    sysparam.bf = 1;
+    paramSaveAll();
+    strcpy(message, "BF OK");
+}
+
+
+void doCFInstruction(ITEM *item, char *message)
+{
+    terminalDisarm();
+    sysparam.bf = 0;
+    paramSaveAll();
+    strcpy(message, "CF OK");
+}
+
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1449,6 +1486,15 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case AGPSEN_INS:
         	doAgpsenInstrution(item, message);
         	break;
+       	case SMSREPLY_INS:
+			doSmsReplyInstruction(item, message);
+       		break;
+       	case BF_INS:
+           	doBFInstruction(item, message);
+           	break;
+        case CF_INS:
+           	doCFInstruction(item, message);
+           	break;
         default:
             if (mode == SMS_MODE)
             {

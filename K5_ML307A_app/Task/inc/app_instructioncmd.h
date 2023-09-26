@@ -49,6 +49,9 @@ typedef enum
     ALARMMODE_INS,
     TILTTHRESHOLD_INS,
     AGPSEN_INS,
+    SMSREPLY_INS,
+    BF_INS,
+    CF_INS,
 } INSTRUCTIONID;
 
 

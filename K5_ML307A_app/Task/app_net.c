@@ -560,7 +560,7 @@ static void moduleExitFly(void)
 static void qirdCmdSend(uint8_t link, uint8_t index)
 {
     char param[10];
-    sprintf(param, "%d,512", link);
+    sprintf(param, "%d,1024", link);
     moduleState.curQirdId = link;
     sendModuleCmd(MIPRD_CMD, param);
 }
@@ -1255,13 +1255,16 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
     while (index >= 0)
     {
         rebuf += index + 16;
-        relen -= index - 16;
-		tmos_memcpy(restore, rebuf, 1);
-		restore[1] = 0;
+        relen -= index + 16;
+        index = getCharIndex(rebuf, relen, ',');
+        if (index < 0 || index > 2)
+        	break;
+		tmos_memcpy(restore, rebuf, index);
+		restore[index] = 0;
 		numb = atoi(restore);
 		index = getCharIndex(rebuf, relen, '"');
 		rebuf += index + 1;
-		relen -= index - 1;
+		relen -= index + 1;
 		index = getCharIndex(rebuf, relen, '"');
         if (numb != 0 && wifiList.apcount < WIFIINFOMAX)
         {
@@ -1657,7 +1660,7 @@ void cmtParser(uint8_t *buf, uint16_t len)
             return;
         }
         rebuf += index + 1;
-        relen -= index - 1;
+        relen -= index + 1;
         index = getCharIndex(rebuf, relen, '\r');
         if (index < 0 || index >= 128)
         {
@@ -1810,7 +1813,7 @@ uint8_t mipurcParser(uint8_t *buf, uint16_t len)
     while (index >= 0)
     {
 		rebuf += index + 10;
-		relen -= index - 10;
+		relen -= index + 10;
         if (my_strpach(rebuf, "rtcp"))
         {
 			rebuf += 6;
@@ -2058,7 +2061,7 @@ static void cmglParser(uint8_t *buf, uint16_t len)
 	while (index >= 0)
 	{
 		rebuf += index + 7;
-		relen -= index - 7;
+		relen -= index + 7;
 		index = getCharIndex(rebuf, relen, '\r');
 		if (index > 0)
 		{

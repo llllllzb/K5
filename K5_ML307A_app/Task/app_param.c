@@ -98,11 +98,13 @@ void paramDefaultInit(uint8_t level)
     sysparam.gsdettime=0;
     sysparam.gsValidCnt=0;
     sysparam.gsInvalidCnt=0;
-    sysparam.hiddenServOnoff = 1;
+    sysparam.hiddenServOnoff = 0;
     sysparam.debug = 0;
     sysparam.agpsen = 1;
     dynamicParam.debug = 0;
     sysparam.mode4Alarm = 1200;
+    sysparam.smsreply = 0;
+    sysparam.bf = 0;
     dynamicParamSaveAll();
     paramSaveAll();
 }
