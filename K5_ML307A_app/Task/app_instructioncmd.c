@@ -389,20 +389,18 @@ static void doModeInstruction(ITEM *item, char *message)
                     //运动不自动传GPS
                     if (sysparam.gapMinutes == 0)
                     {
-
                         sprintf(message, "The device switches to mode 2 without uploading the location");
                     }
                     else
                     {
-                        sprintf(message, "The device switches to mode 2 and uploads the position every %d minutes all the time",
-                                sysparam.gapMinutes);
+                        sprintf(message, "The device switches to mode 2 and uploads the position every %d minutes all the time",sysparam.gapMinutes);
                     }
                 }
                 else
                 {
                     if (getTerminalAccState())
                     {
-                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX)
+                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX && sysparam.gpsuploadgap != 0)
                         {
                             gpsRequestSet(GPS_REQUEST_ACC_CTL);
                         }
@@ -438,7 +436,10 @@ static void doModeInstruction(ITEM *item, char *message)
             case 23:
                 if (workmode == MODE3)
                 {
-                	sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
+                	if (atoi(item->item_data[2]) != 0)
+                	{
+                		sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
+                	}
                 	if (sysparam.gapMinutes < 5)
 	                {
 	                    sysparam.gapMinutes = 5;
@@ -601,6 +602,7 @@ void do123Instruction(ITEM *item, insMode_e mode, void *param)
     }
     sysinfo.flag123 = 1;
     save123InstructionId();
+	netRequestSet();
 
 }
 
@@ -1504,8 +1506,10 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
             snprintf(message, 50, "Unsupport CMD:%s;", item->item_data[0]);
             break;
     }
-
-    sendMsgWithMode((uint8_t *)message, strlen(message), mode, param);
+	if (cmdid != POSITION_INS)
+	{
+    	sendMsgWithMode((uint8_t *)message, strlen(message), mode, param);
+    }
 }
 
 static int16_t getInstructionid(uint8_t *cmdstr)

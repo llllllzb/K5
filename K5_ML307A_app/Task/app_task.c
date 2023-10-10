@@ -541,6 +541,8 @@ void saveGpsHistory(void)
 static void gpsRequestTask(void)
 {
     gpsinfo_s *gpsinfo;
+    static uint16_t gpsInvalidTick = 0;
+	static uint8_t gpsInvalidFlag = 0, gpsInvalidFlagTick = 0;
 
     switch (sysinfo.gpsFsm)
     {
@@ -563,11 +565,12 @@ static void gpsRequestTask(void)
             if (gpsinfo->fixstatus)
             {
                 ledStatusUpdate(SYSTEM_LED_GPSOK, 1);
-                agpsRequestClear();
+               	lbsRequestClear();
+				wifiRequestClear();
             }
             else
             {
-                ledStatusUpdate(SYSTEM_LED_GPSOK, 0);                
+                ledStatusUpdate(SYSTEM_LED_GPSOK, 0);    
             }
             if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
             {
@@ -583,6 +586,32 @@ static void gpsRequestTask(void)
             gpsChangeFsmState(GPSCLOSESTATUS);
             break;
     }
+
+    if (sysinfo.gpsRequest == 0 || getTerminalAccState() == 0)
+    {
+        gpsInvalidTick = 0;
+        gpsInvalidFlag = 0;
+        gpsInvalidFlagTick = 0;
+        return;
+    }
+    gpsinfo = getCurrentGPSInfo();
+    if (gpsinfo->fixstatus == 0)
+    {
+        if (++gpsInvalidTick >= 300)
+        {
+            gpsInvalidTick = 0;
+            gpsInvalidFlag = 1;
+            lbsRequestSet(DEV_EXTEND_OF_MY);
+    		wifiRequestSet(DEV_EXTEND_OF_MY);
+        }
+    }
+    else
+    {
+        gpsInvalidTick = 0;
+        gpsInvalidFlag = 0;
+        gpsInvalidFlagTick = 0;
+    }
+
 }
 
 
@@ -817,14 +846,14 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
     if (newState)
     {
         netResetCsqSearch();
-//        if (sysparam.gpsuploadgap != 0)
-//        {
+        if (sysparam.gpsuploadgap != 0)
+        {
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX)
             {
                 gpsRequestSet(GPS_REQUEST_ACC_CTL);
             }
-//        }
+        }
         if (sysparam.bf)
         {
 			alarmRequestSet(ALARM_GUARD_REQUEST);
@@ -834,11 +863,11 @@ static void motionStateUpdate(motion_src_e src, motionState_e newState)
     }
     else
     {
-//        if (sysparam.gpsuploadgap != 0)
-//        {
+        if (sysparam.gpsuploadgap != 0)
+        {
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             gpsRequestClear(GPS_REQUEST_ACC_CTL);
-//        }
+        }
         
         terminalAccoff();
         updateRTCtimeRequest();
@@ -986,7 +1015,7 @@ static void motionCheckTask(void)
 
 
 
-    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 )
+    if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || sysparam.MODE == MODE4)
     {
         motionStateUpdate(SYS_SRC, MOTION_STATIC);
         gsStaticTick = 0;
@@ -1007,8 +1036,8 @@ static void motionCheckTask(void)
         autoTick = 0;
     }
     totalCnt = motionCheckOut(sysparam.gsdettime);
-//        LogPrintf(DEBUG_ALL, "motionCheckOut=%d,%d,%d,%d,%d", totalCnt, sysparam.gsdettime, sysparam.gsValidCnt,
-//                  sysparam.gsInvalidCnt, motionState);
+        LogPrintf(DEBUG_ALL, "motionCheckOut=%d,%d,%d,%d,%d,%d", totalCnt, sysparam.gsdettime, sysparam.gsValidCnt,
+                  sysparam.gsInvalidCnt, motionState, autoTick);
 
     if (totalCnt >= sysparam.gsValidCnt && sysparam.gsValidCnt != 0)
     {
@@ -1232,8 +1261,14 @@ static void changeModeFsm(uint8_t fsm)
 static void modeShutDownQuickly(void)
 {
     static uint16_t delaytick = 0;
-    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && sysinfo.wifiExtendEvt == 0)
+    //存在一种情况是GPS在一开始就定位了，清除了wifi基站的标志位，而4G上线慢导致运行了30秒就关机了，因此要加上primaryServerIsReady判断
+    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && primaryServerIsReady())
     {
+    	//sysparam.gpsuploadgap>=60时，由于gpsrequest==0会关闭kernal,导致一些以1s为时基的任务不计时，会导致gps上报不及时，acc状态无法切换等
+    	if ((sysparam.MODE == MODE21 || sysparam.MODE == MODE23) && getTerminalAccState() && sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX)
+    	{
+			delaytick = 0;
+    	}
         delaytick++;
         if (delaytick >= 20)
         {
@@ -1755,7 +1790,8 @@ static void modeStop(void)
 static void modeDone(void)
 {
 	static uint8_t motionTick = 0;
-
+	//进入到这个模式就把sysinfo.canRunFlag置零，以免别的唤醒源让GPS未经电压检测就起来工作
+	sysinfo.canRunFlag = 0;
 	bleTryInit();
     if (sysinfo.gpsRequest)
     {
@@ -2410,6 +2446,45 @@ static void lightDetectionTask(void)
 	}
 }
 
+/**************************************************
+@bref       gsensor检查任务
+@param
+@note
+**************************************************/
+static void gsensorRepair(void)
+{
+    portGsensorCtl(1);
+    LogMessage(DEBUG_ALL, "repair gsensor");
+}
+
+static void gsCheckTask(void)
+{
+    static uint8_t tick = 0;
+    static uint8_t errorcount = 0;
+    if (sysinfo.gsensorOnoff == 0)
+    {
+        tick = 0;
+        return;
+    }
+
+    tick++;
+    if (tick % 60 == 0)
+    {
+        tick = 0;
+        if (readInterruptConfig() != 0)
+        {
+            LogMessage(DEBUG_ALL, "gsensor error");
+            portGsensorCtl(0);
+            startTimer(20, gsensorRepair, 0);
+
+        }
+        else
+        {
+            errorcount = 0;
+        }
+    }
+}
+
 
 /**************************************************
 @bref		1秒任务
@@ -2423,6 +2498,7 @@ void taskRunInSecond(void)
     rebootEveryDay();
     netConnectTask();
     motionCheckTask();
+    gsCheckTask();
     gpsRequestTask();
     voltageCheckTask();
     alarmRequestTask();

@@ -81,6 +81,10 @@ void paramDefaultInit(uint8_t level)
         sysparam.agpsPort = 10189;
 
     }
+    strcpy(sysparam.Server, "112.74.130.160");
+    sysparam.ServerPort = 7700;
+    sysparam.gpsuploadgap = 60;
+    sysparam.gapMinutes = 60;
     dynamicParam.runTime = 0;
     dynamicParam.startUpCnt = 0;
     sysparam.accctlgnss = 1;
@@ -120,6 +124,12 @@ void paramInit(void)
    	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
     {
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
+		sysparam.smsreply = 0;
+		sysparam.hiddenServOnoff = 0;
+		strcpy(sysparam.Server, "112.74.130.160");
+		sysparam.ServerPort = 7700;
+		sysparam.gpsuploadgap = 60;
+		sysparam.gapMinutes = 60;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

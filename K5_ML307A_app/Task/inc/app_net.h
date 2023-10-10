@@ -227,6 +227,7 @@ void moduleSleepCtl(uint8_t onoff);
 void moduleGetCsq(void);
 void moduleGetLbs(void);
 void moduleGetWifiScan(void);
+void moduleStopWifiScan(void);
 
 void sendMessage(uint8_t *buf, uint16_t len, char *telnum);
 void deleteAllMessage(void);

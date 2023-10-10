@@ -1258,7 +1258,17 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
         relen -= index + 16;
         index = getCharIndex(rebuf, relen, ',');
         if (index < 0 || index > 2)
+        {
+			tmos_memcpy(restore, rebuf, 1);
+			restore[1] = 0;
+			numb = atoi(restore);
+			if (numb == 0 && wifiList.apcount == 0)
+			{
+				sysinfo.wifiExtendEvt = 0;
+			}
         	break;
+        }
+
 		tmos_memcpy(restore, rebuf, index);
 		restore[index] = 0;
 		numb = atoi(restore);
@@ -2341,6 +2351,19 @@ void moduleGetWifiScan(void)
 }
 
 /**************************************************
+@bref		Í£Ö¹WIFIscan
+@param
+@return
+@note
+**************************************************/
+
+void moduleStopWifiScan(void)
+{
+    sendModuleCmd(AT_CMD, NULL);
+    sendModuleCmd(MWIFISCANSTOP_CMD, NULL);
+}
+
+/**************************************************
 @bref		·¢ËÍ¶ÌÏûÏ¢
 @param
 @return
@@ -2422,7 +2445,7 @@ void querySendData(uint8_t link)
 
 void queryBatVoltage(void)
 {
-        sendModuleCmd(MADC_CMD, "0");
+    //sendModuleCmd(MADC_CMD, "0");
 }
 
 /**************************************************

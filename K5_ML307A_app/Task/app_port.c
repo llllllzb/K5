@@ -790,13 +790,7 @@ void portDebugUartCfg(uint8_t onoff)
 	{
 		if (sysinfo.sleep && sysinfo.kernalRun == 0)
 		{
-			portUartCfg(APPUSART2, 0, 115200, NULL);
-//		    // 手动拉低Boot引脚
-////		    if (sysparam.MODE != MODE2)
-////		    {
-////			    GPIOB_ModeCfg(GPIO_Pin_22, GPIO_ModeOut_PP_5mA);
-////			    GPIOB_ResetBits(GPIO_Pin_22);
-////		    }
+//			portUartCfg(APPUSART2, 0, 115200, NULL);
 	    }
 	}
 }
