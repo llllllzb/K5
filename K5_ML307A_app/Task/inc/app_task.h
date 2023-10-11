@@ -170,6 +170,9 @@ void hdGpsGsvCtl(uint8_t onoff);
 void ledStatusUpdate(uint8_t status, uint8_t onoff);
 void lbsRequestClear(void);
 
+void wifiTimeout(void);
+void wifiRspSuccess(void);
+
 void wifiRequestClear(void);
 void saveGpsHistory(void);
 

@@ -22,7 +22,7 @@
 static SystemLEDInfo sysledinfo;
 motionInfo_s motionInfo;
 static bleScanTry_s bleTry;
-
+static int8_t wifiTimeOutId = -1;
 
 /**************************************************
 @bref		bit0 置位，布防
@@ -586,14 +586,19 @@ static void gpsRequestTask(void)
             gpsChangeFsmState(GPSCLOSESTATUS);
             break;
     }
-
-    if (sysinfo.gpsRequest == 0 || getTerminalAccState() == 0)
+    if (getTerminalAccState() == 0)
     {
         gpsInvalidTick = 0;
         gpsInvalidFlag = 0;
         gpsInvalidFlagTick = 0;
         return;
     }
+    //如果仅关闭gps，不清除gpsInvalidTick
+    if (sysinfo.gpsRequest == 0)
+    {
+		return;
+    }
+    LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d", gpsInvalidTick);
     gpsinfo = getCurrentGPSInfo();
     if (gpsinfo->fixstatus == 0)
     {
@@ -601,7 +606,7 @@ static void gpsRequestTask(void)
         {
             gpsInvalidTick = 0;
             gpsInvalidFlag = 1;
-            lbsRequestSet(DEV_EXTEND_OF_MY);
+            //lbsRequestSet(DEV_EXTEND_OF_MY);
     		wifiRequestSet(DEV_EXTEND_OF_MY);
         }
     }
@@ -1036,8 +1041,8 @@ static void motionCheckTask(void)
         autoTick = 0;
     }
     totalCnt = motionCheckOut(sysparam.gsdettime);
-        LogPrintf(DEBUG_ALL, "motionCheckOut=%d,%d,%d,%d,%d,%d", totalCnt, sysparam.gsdettime, sysparam.gsValidCnt,
-                  sysparam.gsInvalidCnt, motionState, autoTick);
+//        LogPrintf(DEBUG_ALL, "motionCheckOut=%d,%d,%d,%d,%d,%d", totalCnt, sysparam.gsdettime, sysparam.gsValidCnt,
+//                  sysparam.gsInvalidCnt, motionState, autoTick);
 
     if (totalCnt >= sysparam.gsValidCnt && sysparam.gsValidCnt != 0)
     {
@@ -1646,7 +1651,7 @@ static void modeStart(void)
     if (sysinfo.mode4First == 0)
     {
 		sysinfo.mode4First = 1;
-		lbsRequestSet(DEV_EXTEND_OF_MY);
+//		lbsRequestSet(DEV_EXTEND_OF_MY);
 		wifiRequestSet(DEV_EXTEND_OF_MY);
     	gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     	netRequestSet();
@@ -1695,7 +1700,7 @@ static void modeStart(void)
     }
     LogPrintf(DEBUG_ALL, "modeStart==>%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
     LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);
-    lbsRequestSet(DEV_EXTEND_OF_MY);
+//    lbsRequestSet(DEV_EXTEND_OF_MY);
     wifiRequestSet(DEV_EXTEND_OF_MY);
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     
@@ -2147,8 +2152,40 @@ static void lbsRequestTask(void)
     if (sysparam.protocol == ZT_PROTOCOL_TYPE)
     {
         moduleGetLbs();
-        startTimer(70, sendLbs, 0);
+        startTimer(20, sendLbs, 0);
     }
+}
+
+/**************************************************
+@bref		wifi超时处理
+@param
+@return
+@note
+**************************************************/
+
+void wifiTimeout(void)
+{
+	LogMessage(DEBUG_ALL, "wifiTimeout");
+	lbsRequestSet(DEV_EXTEND_OF_MY);
+	wifiRequestClear();
+	wifiTimeOutId = -1;
+}
+
+/**************************************************
+@bref		wifi应答成功
+@param
+@return
+@note
+**************************************************/
+
+void wifiRspSuccess(void)
+{
+	LogMessage(DEBUG_ALL, "wifiRspSuccess");
+	if (wifiTimeOutId != -1)
+	{
+		stopTimer(wifiTimeOutId);
+		wifiTimeOutId = -1;
+	}
 }
 
 /**************************************************
@@ -2197,7 +2234,16 @@ static void wifiRequestTask(void)
     sysinfo.wifiRequest = 0;
     if (sysparam.protocol == ZT_PROTOCOL_TYPE)
     {
-        startTimer(80, moduleGetWifiScan, 0);
+    	//有AGPS先等AGPS数据读取完完再发WIFI请求
+    	if (sysinfo.agpsRequest)
+    	{
+        	startTimer(70, moduleGetWifiScan, 0);
+        }
+        else
+        {
+			startTimer(30, moduleGetWifiScan, 0);
+        }
+        wifiTimeOutId = startTimer(300, wifiTimeout, 0);
     }
 }
 
@@ -2429,7 +2475,7 @@ static void lightDetectionTask(void)
 			alarmRequestSet(ALARM_LIGHT_REQUEST);
 			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
 			jt808UpdateAlarm(JT808_LIGHT_ALARM, 1);
-			lbsRequestSet(DEV_EXTEND_OF_MY);
+			//lbsRequestSet(DEV_EXTEND_OF_MY);
 			wifiRequestSet(DEV_EXTEND_OF_MY);		
 		}
 		else

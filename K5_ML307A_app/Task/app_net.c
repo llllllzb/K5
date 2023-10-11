@@ -1264,7 +1264,9 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
 			numb = atoi(restore);
 			if (numb == 0 && wifiList.apcount == 0)
 			{
+				wifiRspSuccess();
 				sysinfo.wifiExtendEvt = 0;
+				lbsRequestSet(DEV_EXTEND_OF_MY);
 			}
         	break;
         }
@@ -1302,6 +1304,8 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
             protocolSend(BLE_LINK, PROTOCOL_F3, &wifiList);
         }
         sysinfo.wifiExtendEvt = 0;
+        wifiRspSuccess();
+        lbsRequestClear();
     }
 
 }

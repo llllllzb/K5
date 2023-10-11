@@ -1164,6 +1164,13 @@ void agnssServerTask(void)
     {
     	agpsFsm = 0;
         LogMessage(DEBUG_ALL, "wait agps server ready");
+        //模组在发送AT+MIPOPEN=4,"TCP","agps.domilink.com",10189,60,2,0之后，又发送AT+MIPRD=0,1024时，可能会仅返回+MIPOP
+        //导致设备无法知道agps链路已经连接
+        if (isAgpsDataRecvComplete() != 0)
+        {
+			socketSetConnState(AGPS_LINK, SOCKET_CONN_SUCCESS);
+			LogPrintf(DEBUG_ALL, "Agps sikp");
+        }
         return;
     }
     switch (agpsFsm)

@@ -643,7 +643,7 @@ void doUPSInstruction(ITEM *item, char *message)
 {
     if (item->item_cnt >= 3)
     {
-        strcpy((char *)bootparam.updateServer, item->item_data[1]);
+        strncpy((char *)bootparam.updateServer, item->item_data[1], 50);
         bootparam.updatePort = atoi(item->item_data[2]);
         bootParamSaveAll();
     }
