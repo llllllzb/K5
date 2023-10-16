@@ -711,7 +711,7 @@ void portLdrGpioCfg(uint8_t onoff)
 		if (sysparam.ldrEn == 0)
 			return;
 		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
-		GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_PU);
+		GPIOA_ModeCfg(LDR_PIN, GPIO_ModeIN_Floating);
 		GPIOA_ITModeCfg(LDR_PIN,GPIO_ITMode_FallEdge);
 		if (GPIOA_ReadPortPin(LDR_PIN)) 
 		{

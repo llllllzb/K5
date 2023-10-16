@@ -543,6 +543,7 @@ static void gpsRequestTask(void)
     gpsinfo_s *gpsinfo;
     static uint16_t gpsInvalidTick = 0;
 	static uint8_t gpsInvalidFlag = 0, gpsInvalidFlagTick = 0;
+	uint16_t gpsInvalidparam;
 
     switch (sysinfo.gpsFsm)
     {
@@ -598,15 +599,15 @@ static void gpsRequestTask(void)
     {
 		return;
     }
-    LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d", gpsInvalidTick);
+    gpsInvalidparam = (sysparam.gpsuploadgap < 60) ? 60 : sysparam.gpsuploadgap;
+    LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d  gpsInvalidparam:%d", gpsInvalidTick, gpsInvalidparam);
     gpsinfo = getCurrentGPSInfo();
     if (gpsinfo->fixstatus == 0)
     {
-        if (++gpsInvalidTick >= 300)
+        if (++gpsInvalidTick >= gpsInvalidparam)
         {
             gpsInvalidTick = 0;
             gpsInvalidFlag = 1;
-            //lbsRequestSet(DEV_EXTEND_OF_MY);
     		wifiRequestSet(DEV_EXTEND_OF_MY);
         }
     }
@@ -651,6 +652,10 @@ static void gpsUplodOnePointTask(void)
             runtick = 0;
             uploadtick = 0;
             gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+            if (getTerminalAccState() == 0)
+            {
+            	wifiRequestSet(DEV_EXTEND_OF_MY);
+            }
         }
         return;
     }
@@ -2253,7 +2258,7 @@ static void wifiRequestTask(void)
 @return
 @note
 **************************************************/
-void wakeUpByInt(uint8_t     type, uint8_t sec)
+void wakeUpByInt(uint8_t      type, uint8_t sec)
 {
     switch (type)
     {
@@ -2451,8 +2456,6 @@ void calculateNormalTime(void)
 			sysinfo.ldrDarkCnt++;
 		}
 	}
-
-
 }
 
 /**************************************************
@@ -2728,7 +2731,7 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
 		portGpsGpioCfg(1);
 		portLedGpioCfg(1);
 		portAdcCfg(1);
-		portLdrGpioCfg(1);
+
 		portWdtCfg();
 		portMicGpioCfg();
         tmos_start_reload_task(sysinfo.taskId, APP_TASK_KERNAL_EVENT, MS1_TO_SYSTEM_TIME(100));

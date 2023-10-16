@@ -1270,7 +1270,6 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
 			}
         	break;
         }
-
 		tmos_memcpy(restore, rebuf, index);
 		restore[index] = 0;
 		numb = atoi(restore);
@@ -1290,7 +1289,6 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
         index = getCharIndex(rebuf, relen, '\r');
         rebuf += index;
         relen -= index;
-        
         index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
     }
 	if (wifiList.apcount != 0)
@@ -1307,7 +1305,6 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
         wifiRspSuccess();
         lbsRequestClear();
     }
-
 }
 
 //+CGSN:864606060177986
