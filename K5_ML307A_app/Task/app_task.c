@@ -587,18 +587,19 @@ static void gpsRequestTask(void)
             gpsChangeFsmState(GPSCLOSESTATUS);
             break;
     }
-    if (getTerminalAccState() == 0)
+    /* 只要ACCON就认为是开启GPS， 所以要忽略GPS的开关与否 */
+    if (getTerminalAccState() == 0 && sysparam.gpsuploadgap != 0)
     {
         gpsInvalidTick = 0;
         gpsInvalidFlag = 0;
         gpsInvalidFlagTick = 0;
         return;
     }
-    //如果仅关闭gps，不清除gpsInvalidTick
-    if (sysinfo.gpsRequest == 0)
-    {
-		return;
-    }
+//    //如果仅关闭gps，不清除gpsInvalidTick
+//    if (sysinfo.gpsRequest == 0)
+//    {
+//		return;
+//    }
     gpsInvalidparam = (sysparam.gpsuploadgap < 60) ? 60 : sysparam.gpsuploadgap;
     LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d  gpsInvalidparam:%d", gpsInvalidTick, gpsInvalidparam);
     gpsinfo = getCurrentGPSInfo();
@@ -651,6 +652,7 @@ static void gpsUplodOnePointTask(void)
         {
             runtick = 0;
             uploadtick = 0;
+            LogPrintf(DEBUG_ALL, "gps fix time out");
             gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
             if (getTerminalAccState() == 0)
             {
@@ -2186,6 +2188,7 @@ void wifiTimeout(void)
 void wifiRspSuccess(void)
 {
 	LogMessage(DEBUG_ALL, "wifiRspSuccess");
+	sysinfo.lockTick = 125;
 	if (wifiTimeOutId != -1)
 	{
 		stopTimer(wifiTimeOutId);

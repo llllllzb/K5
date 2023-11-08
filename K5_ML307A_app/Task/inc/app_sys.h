@@ -114,6 +114,7 @@ typedef struct
     uint8_t mode4alarmHour;
     uint8_t mode4alarmMinute;
     uint16_t nonetTick;
+    uint8_t lockTick;
 	
 } SystemInfoTypedef;
 

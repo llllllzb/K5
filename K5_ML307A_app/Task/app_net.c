@@ -196,17 +196,16 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
 void outputNode(void)
 {
     static uint8_t lockFlag = 0;
-    static uint8_t lockTick = 0;
     static uint8_t sleepTick = 0;
     static uint8_t tickRange = 50;
     cmdNode_s *nextnode;
     cmdNode_s *currentnode;
     if (lockFlag)
     {
-        if (lockTick++ >= tickRange)
+        if (sysinfo.lockTick++ >= tickRange)
         {
             lockFlag = 0;
-            lockTick = 0;
+            sysinfo.lockTick = 0;
             LogMessage(DEBUG_ALL, "outputNode==>Unlock");
         }
         return ;
@@ -1239,15 +1238,14 @@ static void qisendParser(uint8_t *buf, uint16_t len)
 
 
 **************************************************/
-static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
+void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
 {
     int index;
     uint8_t *rebuf, i;
     int16_t relen;
     char restore[20];
     uint8_t numb;
-    WIFIINFO wifiList;
-    
+    WIFIINFO wifiList = { 0 };
     rebuf = buf;
     relen = len;
     index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
@@ -1283,8 +1281,16 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
             restore[index] = 0;
             LogPrintf(DEBUG_ALL, "WIFI(%d):[%s]", numb, restore);
             wifiList.ap[wifiList.apcount].signal = 0;
-            changeHexStringToByteArray(wifiList.ap[wifiList.apcount].ssid, restore, 6);
-            wifiList.apcount++;
+            /*  */
+            if (strncmp(restore, "000000000000", 12) == 0 || strncmp(restore, "FFFFFFFFFFFF", 12) == 0)
+            {
+				LogPrintf(DEBUG_ALL, "WIFI mac error:%s", restore);
+            }
+            else
+           	{
+				changeHexStringToByteArray(wifiList.ap[wifiList.apcount].ssid, restore, 6);
+            	wifiList.apcount++;
+           	}
         }
         index = getCharIndex(rebuf, relen, '\r');
         rebuf += index;
@@ -1293,17 +1299,24 @@ static void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
     }
 	if (wifiList.apcount != 0)
     {
-        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
-        {
-            protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
-        }
-        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_BLE)
-        {
-            protocolSend(BLE_LINK, PROTOCOL_F3, &wifiList);
-        }
+    	if (wifiList.apcount < 4)
+    	{
+			lbsRequestSet(DEV_EXTEND_OF_MY);
+    	}
+    	else 
+    	{
+	        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
+	        {
+	            protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
+	        }
+	        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_BLE)
+	        {
+	            protocolSend(BLE_LINK, PROTOCOL_F3, &wifiList);
+	        }
+	        lbsRequestClear();
+		}
         sysinfo.wifiExtendEvt = 0;
         wifiRspSuccess();
-        lbsRequestClear();
     }
 }
 
