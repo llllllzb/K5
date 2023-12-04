@@ -588,7 +588,14 @@ static void gpsRequestTask(void)
             break;
     }
     /* 只要ACCON就认为是开启GPS， 所以要忽略GPS的开关与否 */
-    if (getTerminalAccState() == 0 && sysparam.gpsuploadgap != 0)
+    if (getTerminalAccState() == 0)
+    {
+        gpsInvalidTick = 0;
+        gpsInvalidFlag = 0;
+        gpsInvalidFlagTick = 0;
+        return;
+    }
+    if (sysparam.gpsuploadgap == 0)
     {
         gpsInvalidTick = 0;
         gpsInvalidFlag = 0;
@@ -609,7 +616,7 @@ static void gpsRequestTask(void)
         {
             gpsInvalidTick = 0;
             gpsInvalidFlag = 1;
-    		wifiRequestSet(DEV_EXTEND_OF_MY);
+    		lbsRequestSet(DEV_EXTEND_OF_MY);
         }
     }
     else
@@ -656,7 +663,7 @@ static void gpsUplodOnePointTask(void)
             gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
             if (getTerminalAccState() == 0)
             {
-            	wifiRequestSet(DEV_EXTEND_OF_MY);
+            	lbsRequestSet(DEV_EXTEND_OF_MY);
             }
         }
         return;
@@ -1658,8 +1665,7 @@ static void modeStart(void)
     if (sysinfo.mode4First == 0)
     {
 		sysinfo.mode4First = 1;
-//		lbsRequestSet(DEV_EXTEND_OF_MY);
-		wifiRequestSet(DEV_EXTEND_OF_MY);
+		lbsRequestSet(DEV_EXTEND_OF_MY);
     	gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     	netRequestSet();
     }
@@ -1697,7 +1703,6 @@ static void modeStart(void)
 		    modulePowerOn();
 		    netResetCsqSearch();
 		    portSetNextAlarmTime();
-		    portSetNextMode4AlarmTime();
 		    changeModeFsm(MODE_RUNING);
         	return;
         default:
@@ -1707,8 +1712,8 @@ static void modeStart(void)
     }
     LogPrintf(DEBUG_ALL, "modeStart==>%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
     LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);
-//    lbsRequestSet(DEV_EXTEND_OF_MY);
-    wifiRequestSet(DEV_EXTEND_OF_MY);
+    lbsRequestSet(DEV_EXTEND_OF_MY);
+
     gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
     
     modulePowerOn();
@@ -1802,9 +1807,24 @@ static void modeStop(void)
 static void modeDone(void)
 {
 	static uint8_t motionTick = 0;
+	static uint8_t tick = 0;
 	//进入到这个模式就把sysinfo.canRunFlag置零，以免别的唤醒源让GPS未经电压检测就起来工作
 	sysinfo.canRunFlag = 0;
 	bleTryInit();
+	
+	/* 如果设备在该状态模组仍然开机则再次关闭模组 */
+	if (isModulePowerOff() == 0)
+	{
+		tick++;
+		if (tick >= 60)
+		{
+			tick = 0;
+			modulePowerOff();
+		}
+	}
+	else{
+		tick = 0;
+	}
     if (sysinfo.gpsRequest)
     {
         motionTick = 0;
@@ -1920,10 +1940,11 @@ static void sysAutoReq(void)
     }
     else if (sysparam.MODE == MODE4)
     {
-    	portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
-        if (hour == sysinfo.mode4alarmHour && minute == sysinfo.mode4alarmMinute)
+    	sysinfo.mode4RunMin++;
+        if (sysinfo.mode4RunMin >= sysparam.mode4GapMinutes)
         {
-            LogPrintf(DEBUG_ALL, "sysAutoReq==>MODE4:%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
+        	sysinfo.mode4RunMin = 0;
+            LogPrintf(DEBUG_ALL, "sysAutoReq==>MODE4");
             gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             netRequestSet();
             if (sysinfo.kernalRun == 0)
@@ -1934,9 +1955,10 @@ static void sysAutoReq(void)
         }
 		if (isModeDone())
 		{
+			sysinfo.mode4RunMin = 0;
 			sysinfo.mode4NoNetTick++;
 			LogPrintf(DEBUG_ALL, "mode4NoNetTick:%d", sysinfo.mode4NoNetTick);
-			if (sysinfo.mode4NoNetTick >= 5)
+			if (sysinfo.mode4NoNetTick >= sysparam.mode4noNetWakeUpMinutes)
 			{
 				sysinfo.mode4NoNetTick = 0;
                 LogMessage(DEBUG_ALL, "mode 4 restoration network");
@@ -2205,8 +2227,8 @@ void wifiRspSuccess(void)
 
 void wifiRequestSet(uint8_t ext)
 {
-    sysinfo.wifiRequest = 1;
-    sysinfo.wifiExtendEvt |= ext;
+//    sysinfo.wifiRequest = 1;
+//    sysinfo.wifiExtendEvt |= ext;
 }
 
 /**************************************************
@@ -2232,27 +2254,28 @@ void wifiRequestClear(void)
 
 static void wifiRequestTask(void)
 {
-    if (sysinfo.wifiRequest == 0)
-    {
-        return;
-    }
-    if (primaryServerIsReady() == 0)
-        return;
+//    if (sysinfo.wifiRequest == 0)
+//    {
+//        return;
+//    }
+//    if (primaryServerIsReady() == 0)
+//        return;
 
     sysinfo.wifiRequest = 0;
-    if (sysparam.protocol == ZT_PROTOCOL_TYPE)
-    {
-    	//有AGPS先等AGPS数据读取完完再发WIFI请求
-    	if (sysinfo.agpsRequest)
-    	{
-        	startTimer(70, moduleGetWifiScan, 0);
-        }
-        else
-        {
-			startTimer(30, moduleGetWifiScan, 0);
-        }
-        wifiTimeOutId = startTimer(300, wifiTimeout, 0);
-    }
+    sysinfo.wifiExtendEvt = 0;
+//    if (sysparam.protocol == ZT_PROTOCOL_TYPE)
+//    {
+//    	//有AGPS先等AGPS数据读取完完再发WIFI请求
+//    	if (sysinfo.agpsRequest)
+//    	{
+//        	startTimer(70, moduleGetWifiScan, 0);
+//        }
+//        else
+//        {
+//			startTimer(30, moduleGetWifiScan, 0);
+//        }
+//        wifiTimeOutId = startTimer(300, wifiTimeout, 0);
+//    }
 }
 
 /**************************************************
@@ -2481,8 +2504,7 @@ static void lightDetectionTask(void)
 			alarmRequestSet(ALARM_LIGHT_REQUEST);
 			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
 			jt808UpdateAlarm(JT808_LIGHT_ALARM, 1);
-			//lbsRequestSet(DEV_EXTEND_OF_MY);
-			wifiRequestSet(DEV_EXTEND_OF_MY);		
+			lbsRequestSet(DEV_EXTEND_OF_MY);	
 		}
 		else
 		{
@@ -2561,7 +2583,6 @@ void taskRunInSecond(void)
     autoSleepTask();
     sysModeRunTask();
     serverManageTask();
-	
 }
 
 

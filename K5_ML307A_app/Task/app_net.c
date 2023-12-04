@@ -412,8 +412,8 @@ void modulePowerOff(void)
     
     portUartCfg(APPUSART0, 0, 57600, NULL);
     POWER_OFF;
-    RSTKEY_HIGH;
-    PWRKEY_HIGH;
+    RSTKEY_LOW;
+    PWRKEY_LOW;
     //startTimer(5, modulePowerOffProcess, 0);
     moduleInit();
     sysinfo.moduleRstFlag = 1;
@@ -444,9 +444,9 @@ void moduleReset(void)
     LogMessage(DEBUG_ALL, "moduleReset");
     moduleInit();
     POWER_OFF;
-    PWRKEY_HIGH;
-    RSTKEY_HIGH;
-    startTimer(10, modulePowerOn, 0);
+    RSTKEY_LOW;
+    PWRKEY_LOW;
+    startTimer(30, modulePowerOn, 0);
     socketDelAll();
 }
 
@@ -1343,15 +1343,15 @@ static void cgsnParser(uint8_t *buf, uint16_t len)
         }
         moduleState.IMEI[index] = 0;
         LogPrintf(DEBUG_ALL, "module IMEI [%s]", moduleState.IMEI);
-        if (tmos_memcmp(moduleState.IMEI, dynamicParam.SN, 15) == FALSE)
-        {
-            tmos_memset(dynamicParam.SN, 0, sizeof(dynamicParam.SN));
-            strncpy(dynamicParam.SN, moduleState.IMEI, 15);
-            jt808CreateSn(dynamicParam.jt808sn, dynamicParam.SN + 3, 12);
-            dynamicParam.jt808isRegister = 0;
-            dynamicParam.jt808AuthLen = 0;
-            dynamicParamSaveAll();
-        }
+//        if (tmos_memcmp(moduleState.IMEI, dynamicParam.SN, 15) == FALSE)
+//        {
+//            tmos_memset(dynamicParam.SN, 0, sizeof(dynamicParam.SN));
+//            strncpy(dynamicParam.SN, moduleState.IMEI, 15);
+//            jt808CreateSn(dynamicParam.jt808sn, dynamicParam.SN + 3, 12);
+//            dynamicParam.jt808isRegister = 0;
+//            dynamicParam.jt808AuthLen = 0;
+//            dynamicParamSaveAll();
+//        }
     }
 
 }
@@ -2360,8 +2360,8 @@ void moduleGetLbs(void)
 
 void moduleGetWifiScan(void)
 {
-    sendModuleCmd(AT_CMD, NULL);
-    sendModuleCmd(MWIFISCANSTART_CMD, NULL);
+//    sendModuleCmd(AT_CMD, NULL);
+//    sendModuleCmd(MWIFISCANSTART_CMD, NULL);
 }
 
 /**************************************************

@@ -1003,8 +1003,9 @@ void portGsensorCtl(uint8_t onoff)
     {
         sysinfo.gsensorOnoff = 1;
         GSPWR_ON;
+        DelayMs(50);
         mir3da_init();
-
+        DelayMs(50);
 		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );
         GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_Floating);
         GPIOB_ITModeCfg(GSINT_PIN, GPIO_ITMode_RiseEdge);
@@ -1468,100 +1469,100 @@ int portSetNextAlarmTime(void)
   * @retval None
   */
 
-int portSetNextMode4AlarmTime(void)
-{
-	if (sysparam.mode4Alarm == 0xFFFF)
-		return 0;
-	sysinfo.mode4alarmHour = (sysparam.mode4Alarm / 60) % 24;
-	sysinfo.mode4alarmMinute = sysparam.mode4Alarm % 60;
-//    unsigned short  rtc_mins, next_ones;
-//    unsigned char next_date, set_nextdate = 1;
-//    uint16_t  YearToday;      /*当前年*/
-//    uint8_t  MonthToday;     /*当前月*/
-//    uint8_t  DateToday;      /*当前日*/
-//    int i;
-//    uint16_t year;
-//    uint8_t  month;
-//    uint8_t date;
-//    uint8_t hour;
-//    uint8_t minute;
-//    uint8_t second;
-//
-//    portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
-//
-//    //1、读取当前时间点的总分钟数
-//    rtc_mins = (hour & 0x1F) * 60;
-//    rtc_mins += (minute & 0x3f);
-//    //2、读取当前年月
-//    YearToday = year; //计算当前年，从2000年开始算起
-//    MonthToday = month;
-//    DateToday = date;
-//    //3、根据当前月，计算下个月日期
-//    if (MonthToday == 4 || MonthToday == 6 || MonthToday == 9 || MonthToday == 11)
-//    {
-//        next_date = (DateToday + 1) % 30; //当前日期加上间隔日，计算下一次的时间点
-//        if (next_date == 0)
-//            next_date = 30;
-//    }
-//    else if (MonthToday == 2)
-//    {
-//        //4、如果是2月，判断是不是闰年
-//        if (((YearToday % 100 != 0) && (YearToday % 4 == 0)) || (YearToday % 400 == 0))  //闰年
-//        {
-//            next_date = (DateToday + 1) % 29;
-//            if (next_date == 0)
-//                next_date = 29;
-//        }
-//        else
-//        {
-//            next_date = (DateToday + 1) % 28;
-//            if (next_date == 0)
-//                next_date = 28;
-//        }
-//    }
-//    else
-//    {
-//        next_date = (DateToday + 1) % 31;
-//        if (next_date == 0)
-//            next_date = 31;
-//    }
-//    next_ones = 0xFFFF;
-//	//5、比对mode4时间表
+//int portSetNextMode4AlarmTime(void)
+//{
 //	if (sysparam.mode4Alarm == 0xFFFF)
-//	{
 //		return 0;
-//	}
-//	else 
-//	{
-//		//今天
-//		if (sysparam.mode4Alarm > rtc_mins)
-//		{
-//			next_ones = sysparam.mode4Alarm;
-//			if (next_date < 1440)
-//			{
-//				set_nextdate = 0;
-//			}
-//		}
-//		//明天
-//		else
-//		{
-//			set_nextdate = 1;
-//		}	
-//	}
-//	if (set_nextdate)
-//	{
-//		sysinfo.mode4alarmDate = next_date;
-//		sysinfo.mode4alarmHour = (next_ones / 60) % 24;
-//		sysinfo.mode4alarmMinute = (next_ones / 60) % 24;
-//	}
-//	else
-//	{
-//		sysinfo.mode4alarmDate = date;
-//		sysinfo.mode4alarmHour = (next_ones / 60) % 24;
-//		sysinfo.mode4alarmMinute = (next_ones / 60) % 24;
-//	}
-//	return 1;
-}
+//	sysinfo.mode4alarmHour = (sysparam.mode4Alarm / 60) % 24;
+//	sysinfo.mode4alarmMinute = sysparam.mode4Alarm % 60;
+////    unsigned short  rtc_mins, next_ones;
+////    unsigned char next_date, set_nextdate = 1;
+////    uint16_t  YearToday;      /*当前年*/
+////    uint8_t  MonthToday;     /*当前月*/
+////    uint8_t  DateToday;      /*当前日*/
+////    int i;
+////    uint16_t year;
+////    uint8_t  month;
+////    uint8_t date;
+////    uint8_t hour;
+////    uint8_t minute;
+////    uint8_t second;
+////
+////    portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
+////
+////    //1、读取当前时间点的总分钟数
+////    rtc_mins = (hour & 0x1F) * 60;
+////    rtc_mins += (minute & 0x3f);
+////    //2、读取当前年月
+////    YearToday = year; //计算当前年，从2000年开始算起
+////    MonthToday = month;
+////    DateToday = date;
+////    //3、根据当前月，计算下个月日期
+////    if (MonthToday == 4 || MonthToday == 6 || MonthToday == 9 || MonthToday == 11)
+////    {
+////        next_date = (DateToday + 1) % 30; //当前日期加上间隔日，计算下一次的时间点
+////        if (next_date == 0)
+////            next_date = 30;
+////    }
+////    else if (MonthToday == 2)
+////    {
+////        //4、如果是2月，判断是不是闰年
+////        if (((YearToday % 100 != 0) && (YearToday % 4 == 0)) || (YearToday % 400 == 0))  //闰年
+////        {
+////            next_date = (DateToday + 1) % 29;
+////            if (next_date == 0)
+////                next_date = 29;
+////        }
+////        else
+////        {
+////            next_date = (DateToday + 1) % 28;
+////            if (next_date == 0)
+////                next_date = 28;
+////        }
+////    }
+////    else
+////    {
+////        next_date = (DateToday + 1) % 31;
+////        if (next_date == 0)
+////            next_date = 31;
+////    }
+////    next_ones = 0xFFFF;
+////	//5、比对mode4时间表
+////	if (sysparam.mode4Alarm == 0xFFFF)
+////	{
+////		return 0;
+////	}
+////	else 
+////	{
+////		//今天
+////		if (sysparam.mode4Alarm > rtc_mins)
+////		{
+////			next_ones = sysparam.mode4Alarm;
+////			if (next_date < 1440)
+////			{
+////				set_nextdate = 0;
+////			}
+////		}
+////		//明天
+////		else
+////		{
+////			set_nextdate = 1;
+////		}	
+////	}
+////	if (set_nextdate)
+////	{
+////		sysinfo.mode4alarmDate = next_date;
+////		sysinfo.mode4alarmHour = (next_ones / 60) % 24;
+////		sysinfo.mode4alarmMinute = (next_ones / 60) % 24;
+////	}
+////	else
+////	{
+////		sysinfo.mode4alarmDate = date;
+////		sysinfo.mode4alarmHour = (next_ones / 60) % 24;
+////		sysinfo.mode4alarmMinute = (next_ones / 60) % 24;
+////	}
+////	return 1;
+//}
 
 
 /**

@@ -439,7 +439,7 @@ s8_m da217_init(void)
 {
 	s8_m res = 0;
 	res |= mir3da_register_write(NSA_REG_SPI_I2C, 0x24);
-	//HAL_Delay(20);
+	DelayMs(20);
 
 	res |= mir3da_register_write(NSA_REG_G_RANGE, 0x00);               //+/-2G,14bit
 	res |= mir3da_register_write(NSA_REG_POWERMODE_BW, 0x34);          //normal mode
@@ -450,7 +450,7 @@ s8_m da217_init(void)
 	res |= mir3da_register_write(NSA_REG_ENGINEERING_MODE, 0x69);
 	res |= mir3da_register_write(NSA_REG_ENGINEERING_MODE, 0xBD);
 	mir3da_register_write(NSA_REG_SENS_COMP, 0x00);
-
+	DelayMs(50);
    	mir3da_open_interrupt(10);
     mir3da_set_enable(1);
 }

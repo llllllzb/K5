@@ -110,11 +110,10 @@ typedef struct
 	uint16_t mode4NoNetTick;
 	uint8_t netRequest;
 
-	uint8_t mode4alarmDate;
-    uint8_t mode4alarmHour;
-    uint8_t mode4alarmMinute;
+
     uint16_t nonetTick;
     uint8_t lockTick;
+    uint16_t mode4RunMin;
 	
 } SystemInfoTypedef;
 

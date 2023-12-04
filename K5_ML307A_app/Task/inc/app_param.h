@@ -20,9 +20,9 @@
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 //实际是0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x2B
 #define BOOT_PARAM_FLAG         0xB0
-#define OTA_PARAM_FLAG          0x1C
+#define OTA_PARAM_FLAG          0xC1
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.2.6"
+#define EEPROM_VERSION									"K5-CS_ML307A_HD_V2.2.8"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -109,9 +109,12 @@ typedef struct
 	uint8_t agpsen;
 	uint8_t debug;
 
-	uint16_t mode4Alarm;
+	uint16_t mode4Alarm123;
 	uint8_t smsreply;
 	uint8_t bf;
+	uint8_t angleTurnThrd;	//拐弯补传阈值
+	uint16_t mode4GapMinutes;
+	uint16_t mode4noNetWakeUpMinutes;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

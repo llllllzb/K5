@@ -50,6 +50,8 @@ const instruction_s insCmdTable[] =
     {SMSREPLY_INS, "SMSREPLY"},
     {BF_INS, "BF"},
     {CF_INS, "CF"},
+    {ANGLETURNTHRD_INS, "ANGLETURNTHRD"},
+    {SN_INS, "SN"},
 };
 
 static insMode_e mode123;
@@ -173,14 +175,7 @@ static void doParamInstruction(ITEM *item, char *message)
             sprintf(message + strlen(message), "Mode23: %d minutes;", sysparam.gapMinutes);
             break;
        	case MODE4:
-       		if (sysparam.mode4Alarm != 0xFFFF)
-       		{
-				sprintf(message + strlen(message), "Mode%d,TimeAlarm==>Time:%.2d:%.2d;", sysparam.MODE, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
-			}
-			else
-			{
-				sprintf(message + strlen(message),"Mode%d, TimeAlarm==>Disable;", sysparam.MODE);
-			}
+       	    sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
        		break;
     }
 
@@ -287,14 +282,8 @@ static void doModeInstruction(ITEM *item, char *message)
     {
     	if (sysparam.MODE == MODE4)
     	{
-			if (sysparam.mode4Alarm != 0xFFFF)
-       		{
-				sprintf(message + strlen(message), "Mode%d,TimeAlarm==>Time:%.2d:%.2d", sysparam.MODE, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
-			}
-			else
-			{
-				sprintf(message + strlen(message),"Mode%d, TimeAlarm==>Disable");
-			}
+			sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
+
     	}
     	else
     	{
@@ -436,7 +425,7 @@ static void doModeInstruction(ITEM *item, char *message)
             case 23:
                 if (workmode == MODE3)
                 {
-                	if (atoi(item->item_data[2]) != 0)
+                	if (item->item_data[2][0] != 0)
                 	{
                 		sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
                 	}
@@ -460,11 +449,11 @@ static void doModeInstruction(ITEM *item, char *message)
                 }
                 else
                 {
-                	if (atoi(item->item_data[2]) != 0)
+                	if (item->item_data[2][0] != 0)
                 	{
 						sysparam.gpsuploadgap = (uint16_t)atoi((const char *)item->item_data[2]);
                 	}
-                    if (atoi(item->item_data[3]) != 0)
+                    if (item->item_data[3][0] != 0)
                     {
                         sysparam.gapMinutes = (uint16_t)atoi((const char *)item->item_data[3]);
                     }
@@ -483,43 +472,14 @@ static void doModeInstruction(ITEM *item, char *message)
                 }
                 break;
             case 4:
-				if (item->item_cnt > 2)
-				{
-					if (strlen(item->item_data[2]) <= 4 && strlen(item->item_data[2]) >= 3)
-					{
-						valueofminute = atoi(item->item_data[2]);
-						mode4time = valueofminute / 100 * 60 + valueofminute % 100;
-						sysparam.mode4Alarm = mode4time;
-					}
-					else
-					{
-						if (atoi(item->item_data[2]) == 0)
-						{
-							sysparam.mode4Alarm = 0xFFFF;
-						}
-						else
-						{
-							sysparam.MODE = MODE4;
-							terminalAccoff();
-			                if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
-			                {
-			                    gpsRequestClear(GPS_REQUEST_ACC_CTL);
-			                }
-			                gpsRequestClear(GPS_REQUEST_ALL);
-			                lbsRequestClear();
-			                wifiRequestClear();
-			                agpsRequestClear();
-			                portGsensorCtl(0);
-			                startTimer(50, changeMode4Callback, 0);
-							sprintf(message, "Change to mode %d ,and please enter right param", workmode);
-							break;
-						}
-					}
-				}
 				sysparam.MODE = MODE4;
-				if (sysparam.mode4Alarm != 0xFFFF)
+				if (item->item_data[2][0] != 0)
 				{
-					portSetNextMode4AlarmTime();
+					sysparam.mode4GapMinutes = (uint16_t)atoi((const char *)item->item_data[2]);
+				}
+				if (item->item_data[3][0] != 0)
+				{
+					sysparam.mode4noNetWakeUpMinutes = (uint16_t)atoi((const char *)item->item_data[3]);
 				}
 				terminalAccoff();
                 if (gpsRequestGet(GPS_REQUEST_ACC_CTL))
@@ -532,14 +492,7 @@ static void doModeInstruction(ITEM *item, char *message)
                 agpsRequestClear();
                 portGsensorCtl(0);
                 startTimer(50, changeMode4Callback, 0);
-                if (sysparam.mode4Alarm != 0xFFFF)
-                {
-                	sprintf(message, "Change to mode %d and wakeup at %.2d:%.2d", workmode, (sysparam.mode4Alarm / 60) % 24, sysparam.mode4Alarm % 60);
-                }
-                else
-                {
-					sprintf(message, "Change to mode %d and diable wakeup time", workmode);
-                }
+                sprintf(message, "Change to mode %d %d %d", workmode, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
             	break;
             default:
                 strcpy(message, "Unsupport mode");
@@ -1378,6 +1331,38 @@ void doCFInstruction(ITEM *item, char *message)
     strcpy(message, "CF OK");
 }
 
+void doAngleTurnThrdIntstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Angle turn threshold is %d", sysparam.angleTurnThrd);
+	}
+	else
+	{
+		if (item->item_data[1][0] != 0)
+		{
+			sysparam.angleTurnThrd = atoi(item->item_data[1]);
+		}
+		sprintf(message, "Update angle turn threshold to %d", sysparam.angleTurnThrd);
+		paramSaveAll();
+	}
+}
+
+void doSnIntstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Sn is %s", dynamicParam.SN);
+    }
+    else
+    {
+        memcpy(dynamicParam.SN, item->item_data[1],15);
+        dynamicParam.SN[15] = 0;
+        sprintf(message, "Update Sn %s", dynamicParam.SN);
+        dynamicParamSaveAll();
+    }
+}
+
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1497,6 +1482,12 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case CF_INS:
            	doCFInstruction(item, message);
            	break;
+       	case ANGLETURNTHRD_INS:
+			doAngleTurnThrdIntstruction(item, message);
+       		break;
+       	case SN_INS:
+       	    doSnIntstruction(item, message);
+       	    break;
         default:
             if (mode == SMS_MODE)
             {

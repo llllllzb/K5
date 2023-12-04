@@ -66,7 +66,11 @@ void hbtRspSuccess(void)
 static void moduleRspTimeout(void)
 {
     timeOutId = -1;
-    moduleReset();
+    if (sysinfo.runFsm == MODE_RUNING)
+    {
+    	moduleReset();
+		LogMessage(DEBUG_ALL, "moduleRspTimeout");
+    }
 }
 
 static void hbtRspTimeOut(void)
@@ -889,7 +893,6 @@ void bleServerConnTask(void)
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
                 lbsRequestSet(DEV_EXTEND_OF_BLE);
-                wifiRequestSet(DEV_EXTEND_OF_BLE);
             }
             gpsinfo = getCurrentGPSInfo();
 
@@ -1095,7 +1098,7 @@ static void agpsServerConnTask(void)
             	{
 					agpsServerChangeFsm(AGPS_LOGIN);
 	                socketDel(AGPS_LINK);
-	                wifiRequestSet(DEV_EXTEND_OF_MY);
+	                lbsRequestSet(DEV_EXTEND_OF_MY);
 	                agpsRequestClear();
                 }
             }
