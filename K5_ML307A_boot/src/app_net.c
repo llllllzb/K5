@@ -274,6 +274,47 @@ void modulePowerOn(void)
 }
 
 /**************************************************
+@bref		关机完成
+@param
+@return
+@note
+**************************************************/
+
+static void modulePowerOffDone(void)
+{
+	LogMessage(DEBUG_ALL, "modulePowerOff Done");
+	moduleInit();
+	POWER_OFF;
+}
+
+/**************************************************
+@bref		释放关机按键
+@param
+@return
+@note
+**************************************************/
+static void modulePowerOffRelease(void)
+{
+	LogMessage(DEBUG_ALL, "modulePowerOffRelease");
+	PWRKEY_HIGH;
+	startTimer(6000, modulePowerOffDone, 0);
+}	
+
+
+/**************************************************
+@bref		按下关机按键
+@param
+@return
+@note
+**************************************************/
+static void modulePowerOffProcess(void)
+{
+    PWRKEY_LOW;
+	startTimer(3700, modulePowerOffRelease, 0);
+	LogMessage(DEBUG_ALL, "modulePowerOffRelease");
+}
+
+/**************************************************
 @bref		模组关机
 @param
 @return
@@ -283,9 +324,8 @@ void modulePowerOn(void)
 void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
-    moduleInit();
     portUartCfg(APPUSART0, 0, 115200, NULL);
-    POWER_OFF;
+	startTimer(500, modulePowerOffProcess, 0);
     RSTKEY_HIGH;
     PWRKEY_HIGH;
     socketDelAll();
@@ -314,10 +354,10 @@ void moduleReset(void)
 {
     LogMessage(DEBUG_ALL, "moduleReset");
     moduleInit();
-    POWER_OFF;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
-    startTimer(1000, modulePowerOn, 0);
+    startTimer(500, modulePowerOff, 0);
+    startTimer(12000, modulePowerOn, 0);
     socketDelAll();
 }
 
@@ -875,10 +915,17 @@ void mipopenParser(uint8_t *buf, uint16_t len)
 		if (result == 0)
 		{
 			socketSetConnState(link, SOCKET_CONN_SUCCESS);
+			moduleCtrl.qiopenCount = 0;
 		}
 		else
 		{
 			socketSetConnState(link, SOCKET_CONN_ERR);
+			moduleCtrl.qiopenCount++;
+			if (moduleCtrl.qiopenCount >= 4)
+			{
+				moduleReset();
+				moduleCtrl.qiopenCount = 0;
+			}
 		}
 		index = my_getstrindex(rebuf, "+MIPOPEN:", relen);
 	}
@@ -891,6 +938,7 @@ void mipopenParser(uint8_t *buf, uint16_t len)
 @return
 @note
 +MIPCALL: 1,1,"10.165.173.87"
++MIPCALL: 1,0
 
 **************************************************/
 
@@ -914,9 +962,14 @@ static void mipcallParser(uint8_t *buf, uint16_t len)
     {
         moduleState.qipactOk = 1;
     }
-    else
+    else if (ret == 0)
     {
         moduleState.qipactOk = 0;
+        changeProcess(CPIN_STATUS);
+    }
+    else
+    {
+		moduleState.qipactOk = 0;
     }
 
 }

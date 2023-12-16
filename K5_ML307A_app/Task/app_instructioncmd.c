@@ -648,7 +648,7 @@ void doUPSInstruction(ITEM *item, char *message)
         bootParamSaveAll();
     }
     bootParamGetAll();
-    sprintf(message, "The device will download the firmware from %s:%d in 8 seconds", bootparam.updateServer,
+    sprintf(message, "The device will download the firmware from %s:%d in 10 seconds", bootparam.updateServer,
             bootparam.updatePort);
     bootparam.updateStatus = 1;
     strcpy(bootparam.SN, dynamicParam.SN);
@@ -658,7 +658,7 @@ void doUPSInstruction(ITEM *item, char *message)
     strcpy(bootparam.codeVersion, EEPROM_VERSION);
     bootParamSaveAll();
     startTimer(30, modulePowerOff, 0);
-    startTimer(80, portSysReset, 0);
+    startTimer(150, portSysReset, 0);
 }
 
 void doLOWWInstruction(ITEM *item, char *message)
@@ -744,9 +744,9 @@ void doPOITYPEInstruction(ITEM *item, char *message)
 
 void doResetInstruction(ITEM *item, char *message)
 {
-    sprintf(message, "System will reset after 8 seconds");
+    sprintf(message, "System will reset after 10 seconds");
 	startTimer(30, modulePowerOff, 0);
-    startTimer(80, portSysReset, 0);
+    startTimer(150, portSysReset, 0);
 }
 
 void doUTCInstruction(ITEM *item, char *message)

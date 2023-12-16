@@ -363,15 +363,28 @@ void modulePowerOn(void)
     LogMessage(DEBUG_ALL, "modulePowerOn");
     moduleInit();
     sysinfo.moduleRstFlag = 1;
-    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
+    portUartCfg(APPUSART0, 1, 115200, moduleRecvParser);
     POWER_ON;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
     startTimer(6, modulePressPowerKey, 0);
     moduleState.gpsFileHandle = 1;
     moduleCtrl.scanMode = 0;
-    
     socketDelAll();
+}
+
+/**************************************************
+@bref		关机完成
+@param
+@return
+@note
+**************************************************/
+
+static void modulePowerOffDone(void)
+{
+	LogMessage(DEBUG_ALL, "modulePowerOff Done");
+	moduleInit();
+	POWER_OFF;
 }
 
 /**************************************************
@@ -382,9 +395,9 @@ void modulePowerOn(void)
 **************************************************/
 static void modulePowerOffRelease(void)
 {
-	LogMessage(DEBUG_ALL, "modulePowerOff Done");
-	moduleInit();
+	LogMessage(DEBUG_ALL, "modulePowerOffRelease");
 	PWRKEY_HIGH;
+	startTimer(60, modulePowerOffDone, 0);
 }	
 
 
@@ -398,6 +411,7 @@ static void modulePowerOffProcess(void)
 {
     PWRKEY_LOW;
 	startTimer(37, modulePowerOffRelease, 0);
+	LogMessage(DEBUG_ALL, "modulePowerOffProcess");
 }
 /**************************************************
 @bref		模组关机
@@ -409,13 +423,10 @@ static void modulePowerOffProcess(void)
 void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
-    
-    portUartCfg(APPUSART0, 0, 57600, NULL);
-    POWER_OFF;
+    portUartCfg(APPUSART0, 0, 115200, NULL);
     RSTKEY_HIGH;
     PWRKEY_HIGH;
-    //startTimer(5, modulePowerOffProcess, 0);
-    moduleInit();
+    startTimer(5, modulePowerOffProcess, 0);
     sysinfo.moduleRstFlag = 1;
     socketDelAll();
 }
@@ -443,10 +454,10 @@ void moduleReset(void)
 {
     LogMessage(DEBUG_ALL, "moduleReset");
     moduleInit();
-    POWER_OFF;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
-    startTimer(10, modulePowerOn, 0);
+    startTimer(10, modulePowerOff, 0);
+    startTimer(120, modulePowerOn, 0);
     socketDelAll();
 }
 

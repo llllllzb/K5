@@ -588,18 +588,20 @@ static void gpsRequestTask(void)
             break;
     }
     /* 只要ACCON就认为是开启GPS， 所以要忽略GPS的开关与否 */
-    if (getTerminalAccState() == 0 && sysparam.gpsuploadgap != 0)
+    if (getTerminalAccState() == 0)
     {
         gpsInvalidTick = 0;
         gpsInvalidFlag = 0;
         gpsInvalidFlagTick = 0;
         return;
     }
-//    //如果仅关闭gps，不清除gpsInvalidTick
-//    if (sysinfo.gpsRequest == 0)
-//    {
-//		return;
-//    }
+    if (sysparam.gpsuploadgap == 0)
+    {
+        gpsInvalidTick = 0;
+        gpsInvalidFlag = 0;
+        gpsInvalidFlagTick = 0;
+        return;
+    }
     gpsInvalidparam = (sysparam.gpsuploadgap < 60) ? 60 : sysparam.gpsuploadgap;
     LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d  gpsInvalidparam:%d", gpsInvalidTick, gpsInvalidparam);
     gpsinfo = getCurrentGPSInfo();
@@ -2663,7 +2665,7 @@ void myTaskPreInit(void)
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
     paramInit();
     //sysinfo.logLevel = 9;
-    SetSysClock(CLK_SOURCE_HSE_16MHz);
+    SetSysClock(CLK_SOURCE_PLL_60MHz);
     portGpioSetDefCfg();
     portModuleGpioCfg(1);
     portGpsGpioCfg(1);
