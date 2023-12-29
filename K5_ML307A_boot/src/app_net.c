@@ -265,7 +265,7 @@ void modulePowerOn(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOn");
     moduleInit();
-    portUartCfg(APPUSART0, 1, 115200, moduleRecvParser);
+    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
     POWER_ON;
     PWRKEY_HIGH;
     RSTKEY_HIGH;
@@ -284,6 +284,7 @@ static void modulePowerOffDone(void)
 {
 	LogMessage(DEBUG_ALL, "modulePowerOff Done");
 	moduleInit();
+	portUartCfg(APPUSART0, 0, 57600, NULL);
 	POWER_OFF;
 }
 
@@ -324,7 +325,7 @@ static void modulePowerOffProcess(void)
 void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
-    portUartCfg(APPUSART0, 0, 115200, NULL);
+    
 	startTimer(500, modulePowerOffProcess, 0);
     RSTKEY_HIGH;
     PWRKEY_HIGH;

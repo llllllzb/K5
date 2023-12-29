@@ -368,7 +368,22 @@ static void doModeInstruction(ITEM *item, char *message)
                 else
                 {
                     sysparam.MODE = MODE21;
-                    portGsensorCtl(0);
+                    portGsensorCtl(1);
+                    if (getTerminalAccState())
+                    {
+                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX && sysparam.gpsuploadgap != 0)
+                        {
+                            gpsRequestSet(GPS_REQUEST_ACC_CTL);
+                        }
+                        else
+                        {
+                            gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                        }
+                    }
+                    else
+                    {
+                        gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                    }
                 }
                 sprintf(message, "Change to Mode%d,and work on at", workmode);
                 for (i = 0; i < timecount; i++)
@@ -476,6 +491,21 @@ static void doModeInstruction(ITEM *item, char *message)
 					{
 						sysparam.gapMinutes = 10080;
 					}
+					if (getTerminalAccState())
+                    {
+                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX && sysparam.gpsuploadgap != 0)
+                        {
+                            gpsRequestSet(GPS_REQUEST_ACC_CTL);
+                        }
+                        else
+                        {
+                            gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                        }
+                    }
+                    else
+                    {
+                        gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                    }
                     sysparam.MODE = MODE23;
                     portGsensorCtl(1);
                     sprintf(message, "Change to mode %d and update interval time to %d s %d m;", workmode, sysparam.gpsuploadgap,

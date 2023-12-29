@@ -1184,7 +1184,7 @@ static void voltageCheckTask(void)
     sysinfo.outsidevoltage = x * sysparam.adccal;
     sysinfo.insidevoltage = sysinfo.outsidevoltage;
 
-    //LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f", x, sysinfo.outsidevoltage);
+    LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f", x, sysinfo.outsidevoltage);
 
 	//µç³Ø±£»¤
     if (sysinfo.outsidevoltage < 2.4 && sysinfo.canRunFlag == 1)
@@ -2665,7 +2665,7 @@ void myTaskPreInit(void)
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
     paramInit();
     //sysinfo.logLevel = 9;
-    SetSysClock(CLK_SOURCE_PLL_60MHz);
+    SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portModuleGpioCfg(1);
     portGpsGpioCfg(1);

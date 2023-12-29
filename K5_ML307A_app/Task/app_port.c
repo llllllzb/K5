@@ -1669,8 +1669,12 @@ void portAdcCfg(uint8_t onoff)
  */
 float portGetAdcVol(ADC_SingleChannelTypeDef channel)
 {
+#define ADC_DET_CNT		7
     float value;
+    float x[ADC_DET_CNT];
+    uint8_t i;
     ADC_ChannelCfg(channel);
+    DelayUs(1);
     ADC_ExtSingleChSampInit(SampleFreq_8, ADC_PGA_0);
     ADC_ExcutSingleConver();
     value = (ADC_ExcutSingleConver() / 2048.0) * 1.05;
@@ -1680,6 +1684,26 @@ float portGetAdcVol(ADC_SingleChannelTypeDef channel)
         ADC_ExcutSingleConver();
         value = (ADC_ExcutSingleConver() / 1024.0 - 1) * 1.05;
     }
+    
+    for (i = 0; i < ADC_DET_CNT; i++)
+    {
+	    ADC_ExtSingleChSampInit(SampleFreq_8, ADC_PGA_0);
+	    ADC_ExcutSingleConver();
+	    x[i] = (ADC_ExcutSingleConver() / 2048.0) * 1.05;
+	    if (value >= 2.0)
+	    {
+	        ADC_ExtSingleChSampInit(SampleFreq_8, ADC_PGA_1_2);
+	        ADC_ExcutSingleConver();
+	        x[i] = (ADC_ExcutSingleConver() / 1024.0 - 1) * 1.05;
+	    }	 
+    }
+    sort(x, ADC_DET_CNT);
+    value = 0.0;
+    for (i = 1; i < ADC_DET_CNT - 1; i++)
+    {
+		value += x[i];
+    }
+    value /= 5.0;
     return value;
 }
 /**

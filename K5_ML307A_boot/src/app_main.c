@@ -50,7 +50,7 @@ void myTask(void)
 
 void main(void)
 {
-    SetSysClock(CLK_SOURCE_PLL_60MHz);
+    SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portUartCfg(APPUSART2, 1, 115200, NULL);
     paramInit();

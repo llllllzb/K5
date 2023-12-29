@@ -37,25 +37,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
   9 .stack        00000000  20008000  20008000  0000bb30  2**0
                   CONTENTS
- 10 .debug_info   000154ab  00000000  00000000  0000bb30  2**0
+ 10 .debug_info   000154a5  00000000  00000000  0000bb30  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_abbrev 000038e2  00000000  00000000  00020fdb  2**0
+ 11 .debug_abbrev 000038e2  00000000  00000000  00020fd5  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_loc    00004520  00000000  00000000  000248bd  2**0
+ 12 .debug_loc    00004520  00000000  00000000  000248b7  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_aranges 000006d8  00000000  00000000  00028de0  2**3
+ 13 .debug_aranges 000006d8  00000000  00000000  00028dd8  2**3
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_ranges 000009a8  00000000  00000000  000294b8  2**3
+ 14 .debug_ranges 000009a8  00000000  00000000  000294b0  2**3
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_line   0000c7d6  00000000  00000000  00029e60  2**0
+ 15 .debug_line   0000c7d6  00000000  00000000  00029e58  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_str    000027cf  00000000  00000000  00036636  2**0
+ 16 .debug_str    000027cf  00000000  00000000  0003662e  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .comment      00000033  00000000  00000000  00038e05  2**0
+ 17 .comment      00000033  00000000  00000000  00038dfd  2**0
                   CONTENTS, READONLY
- 18 .debug_frame  000021e0  00000000  00000000  00038e38  2**2
+ 18 .debug_frame  000021e0  00000000  00000000  00038e30  2**2
                   CONTENTS, READONLY, DEBUGGING
- 19 .stabstr      00000117  00000000  00000000  0003b018  2**0
+ 19 .stabstr      00000117  00000000  00000000  0003b010  2**0
                   CONTENTS, READONLY, DEBUGGING
 SYMBOL TABLE:
 00000000 l    d  .init	00000000 .init
@@ -106,11 +106,11 @@ SYMBOL TABLE:
 20000b38 l     O .bss	00000001 flag.4220
 00000000 l    df *ABS*	00000000 app_net.c
 00000e9e l     F .text	00000022 modulePressPowerKey
-00000f86 l     F .text	0000002e modulePressReleaseKey
+00000f76 l     F .text	0000002e modulePressReleaseKey
 00000ec0 l     F .text	00000038 modulePowerOffProcess
 00000ef8 l     F .text	00000038 modulePowerOffRelease
-00001044 l     F .text	0000002e modulePowerOffDone
-00000fb4 l     F .text	00000022 moduleInit
+00001034 l     F .text	0000003e modulePowerOffDone
+00000fa4 l     F .text	00000022 moduleInit
 00001072 l     F .text	000000b8 createNode
 00001278 l     F .text	0000000c moduleExitFly
 20000b6c l     O .bss	00000801 dataRestore.4859
@@ -304,7 +304,7 @@ SYMBOL TABLE:
 20001aac g       .bss	00000000 end
 0000243e g     F .text	00000038 socketDel
 200001e6 g     F .highcode	00000090 UART2_IRQHandler
-00000fd6 g     F .text	0000006e modulePowerOn
+00000fc6 g     F .text	0000006e modulePowerOn
 200000bc  w      .highcode	00000000 PWMX_IRQHandler
 00006d52 g     F .text	000000ea __ssputs_r
 00002476 g     F .text	00000004 socketDelAll
@@ -334,7 +334,7 @@ SYMBOL TABLE:
 00003b20 g     F .text	0000002a UART2_RecvString
 00003830 g     F .text	00000032 UART0_DefInit
 20000958 g       .data	00000000 _data_vma
-00000f30 g     F .text	00000056 modulePowerOff
+00000f30 g     F .text	00000046 modulePowerOff
 2000032a g     F .highcode	0000015a SetSysClock
 200000aa  w      .highcode	00000000 USB_IRQHandler
 00003c52 g     F .text	000005b0 .hidden __divdf3
@@ -1163,7 +1163,7 @@ Disassembly of section .highcode:
 20000736:	6b85                	lui	s7,0x1
 20000738:	01697933          	and	s2,s2,s6
 2000073c:	6b41                	lui	s6,0x10
-2000073e:	fff98793          	addi	a5,s3,-1 # fff <modulePowerOn+0x29>
+2000073e:	fff98793          	addi	a5,s3,-1 # fff <modulePowerOn+0x39>
 20000742:	0127f7b3          	and	a5,a5,s2
 20000746:	e399                	bnez	a5,2000074c <FLASH_EEPROM_CMD+0x160>
 20000748:	0134fc63          	bgeu	s1,s3,20000760 <FLASH_EEPROM_CMD+0x174>
@@ -1194,7 +1194,7 @@ Disassembly of section .highcode:
 2000078c:	f29900e3          	beq	s2,s1,200006ac <FLASH_EEPROM_CMD+0xc0>
 20000790:	0905                	addi	s2,s2,1
 20000792:	3b7d                	jal	20000550 <FLASH_ROM_IN>
-20000794:	fea90fa3          	sb	a0,-1(s2) # fff <modulePowerOn+0x29>
+20000794:	fea90fa3          	sb	a0,-1(s2) # fff <modulePowerOn+0x39>
 20000798:	bfd5                	j	2000078c <FLASH_EEPROM_CMD+0x1a0>
 2000079a:	fff98793          	addi	a5,s3,-1 # ffff <_data_lma+0x6ad3>
 2000079e:	0ff7f793          	andi	a5,a5,255
@@ -1772,7 +1772,7 @@ Disassembly of section .text:
 
 00000df0 <main>:
      df0:	1141                	addi	sp,sp,-16
-     df2:	04800513          	li	a0,72
+     df2:	02200513          	li	a0,34
      df6:	c606                	sw	ra,12(sp)
      df8:	c422                	sw	s0,8(sp)
      dfa:	1ffff097          	auipc	ra,0x1ffff
@@ -1804,7 +1804,7 @@ Disassembly of section .text:
      e4e:	5fc020ef          	jal	ra,344a <upgradeInfoInit>
      e52:	4601                	li	a2,0
      e54:	00000597          	auipc	a1,0x0
-     e58:	18258593          	addi	a1,a1,386 # fd6 <modulePowerOn>
+     e58:	17258593          	addi	a1,a1,370 # fc6 <modulePowerOn>
      e5c:	3e800513          	li	a0,1000
      e60:	3329                	jal	b6a <startTimer>
      e62:	3e800593          	li	a1,1000
@@ -1835,7 +1835,7 @@ Disassembly of section .text:
      eac:	0af72423          	sw	a5,168(a4)
      eb0:	4601                	li	a2,0
      eb2:	00000597          	auipc	a1,0x0
-     eb6:	0d458593          	addi	a1,a1,212 # f86 <modulePressReleaseKey>
+     eb6:	0c458593          	addi	a1,a1,196 # f76 <modulePressReleaseKey>
      eba:	9c450513          	addi	a0,a0,-1596 # 9c4 <handle_reset+0x64>
      ebe:	b175                	j	b6a <startTimer>
 
@@ -1876,7 +1876,7 @@ Disassembly of section .text:
      f1c:	6505                	lui	a0,0x1
      f1e:	4601                	li	a2,0
      f20:	00000597          	auipc	a1,0x0
-     f24:	12458593          	addi	a1,a1,292 # 1044 <modulePowerOffDone>
+     f24:	11458593          	addi	a1,a1,276 # 1034 <modulePowerOffDone>
      f28:	77050513          	addi	a0,a0,1904 # 1770 <mipurcParser+0x156>
      f2c:	0141                	addi	sp,sp,16
      f2e:	b935                	j	b6a <startTimer>
@@ -1888,102 +1888,102 @@ Disassembly of section .text:
      f3a:	4525                	li	a0,9
      f3c:	c606                	sw	ra,12(sp)
      f3e:	768010ef          	jal	ra,26a6 <LogMessage>
-     f42:	6671                	lui	a2,0x1c
-     f44:	4681                	li	a3,0
-     f46:	20060613          	addi	a2,a2,512 # 1c200 <_data_lma+0x12cd4>
-     f4a:	4581                	li	a1,0
-     f4c:	4501                	li	a0,0
-     f4e:	068010ef          	jal	ra,1fb6 <portUartCfg>
-     f52:	4601                	li	a2,0
-     f54:	00000597          	auipc	a1,0x0
-     f58:	f6c58593          	addi	a1,a1,-148 # ec0 <modulePowerOffProcess>
-     f5c:	1f400513          	li	a0,500
-     f60:	3129                	jal	b6a <startTimer>
-     f62:	400017b7          	lui	a5,0x40001
-     f66:	0ac7a703          	lw	a4,172(a5) # 400010ac <_eusrstack+0x1fff90ac>
-     f6a:	6691                	lui	a3,0x4
-     f6c:	40b2                	lw	ra,12(sp)
-     f6e:	8f55                	or	a4,a4,a3
-     f70:	0ae7a623          	sw	a4,172(a5)
-     f74:	0ac7a703          	lw	a4,172(a5)
-     f78:	66a1                	lui	a3,0x8
-     f7a:	8f55                	or	a4,a4,a3
-     f7c:	0ae7a623          	sw	a4,172(a5)
-     f80:	0141                	addi	sp,sp,16
-     f82:	4f40106f          	j	2476 <socketDelAll>
+     f42:	4601                	li	a2,0
+     f44:	00000597          	auipc	a1,0x0
+     f48:	f7c58593          	addi	a1,a1,-132 # ec0 <modulePowerOffProcess>
+     f4c:	1f400513          	li	a0,500
+     f50:	3929                	jal	b6a <startTimer>
+     f52:	400017b7          	lui	a5,0x40001
+     f56:	0ac7a703          	lw	a4,172(a5) # 400010ac <_eusrstack+0x1fff90ac>
+     f5a:	6691                	lui	a3,0x4
+     f5c:	40b2                	lw	ra,12(sp)
+     f5e:	8f55                	or	a4,a4,a3
+     f60:	0ae7a623          	sw	a4,172(a5)
+     f64:	0ac7a703          	lw	a4,172(a5)
+     f68:	66a1                	lui	a3,0x8
+     f6a:	8f55                	or	a4,a4,a3
+     f6c:	0ae7a623          	sw	a4,172(a5)
+     f70:	0141                	addi	sp,sp,16
+     f72:	5040106f          	j	2476 <socketDelAll>
 
-00000f86 <modulePressReleaseKey>:
-     f86:	40001737          	lui	a4,0x40001
-     f8a:	0ac72783          	lw	a5,172(a4) # 400010ac <_eusrstack+0x1fff90ac>
-     f8e:	66a1                	lui	a3,0x8
-     f90:	00008597          	auipc	a1,0x8
-     f94:	85058593          	addi	a1,a1,-1968 # 87e0 <cmdtable+0x19c>
-     f98:	8fd5                	or	a5,a5,a3
-     f9a:	0af72623          	sw	a5,172(a4)
-     f9e:	04818713          	addi	a4,gp,72 # 20001370 <moduleState>
-     fa2:	00074783          	lbu	a5,0(a4)
-     fa6:	4525                	li	a0,9
-     fa8:	0017e793          	ori	a5,a5,1
-     fac:	00f70023          	sb	a5,0(a4)
-     fb0:	0230106f          	j	27d2 <LogPrintf>
+00000f76 <modulePressReleaseKey>:
+     f76:	40001737          	lui	a4,0x40001
+     f7a:	0ac72783          	lw	a5,172(a4) # 400010ac <_eusrstack+0x1fff90ac>
+     f7e:	66a1                	lui	a3,0x8
+     f80:	00008597          	auipc	a1,0x8
+     f84:	86058593          	addi	a1,a1,-1952 # 87e0 <cmdtable+0x19c>
+     f88:	8fd5                	or	a5,a5,a3
+     f8a:	0af72623          	sw	a5,172(a4)
+     f8e:	04818713          	addi	a4,gp,72 # 20001370 <moduleState>
+     f92:	00074783          	lbu	a5,0(a4)
+     f96:	4525                	li	a0,9
+     f98:	0017e793          	ori	a5,a5,1
+     f9c:	00f70023          	sb	a5,0(a4)
+     fa0:	0330106f          	j	27d2 <LogPrintf>
 
-00000fb4 <moduleInit>:
-     fb4:	04818793          	addi	a5,gp,72 # 20001370 <moduleState>
-     fb8:	0007a023          	sw	zero,0(a5)
-     fbc:	0007a223          	sw	zero,4(a5)
-     fc0:	0007a423          	sw	zero,8(a5)
-     fc4:	0007a623          	sw	zero,12(a5)
-     fc8:	0007a823          	sw	zero,16(a5)
-     fcc:	07800793          	li	a5,120
-     fd0:	82f19123          	sh	a5,-2014(gp) # 20000b4a <moduleCtrl+0x6>
-     fd4:	8082                	ret
+00000fa4 <moduleInit>:
+     fa4:	04818793          	addi	a5,gp,72 # 20001370 <moduleState>
+     fa8:	0007a023          	sw	zero,0(a5)
+     fac:	0007a223          	sw	zero,4(a5)
+     fb0:	0007a423          	sw	zero,8(a5)
+     fb4:	0007a623          	sw	zero,12(a5)
+     fb8:	0007a823          	sw	zero,16(a5)
+     fbc:	07800793          	li	a5,120
+     fc0:	82f19123          	sh	a5,-2014(gp) # 20000b4a <moduleCtrl+0x6>
+     fc4:	8082                	ret
 
-00000fd6 <modulePowerOn>:
-     fd6:	1141                	addi	sp,sp,-16
-     fd8:	00007597          	auipc	a1,0x7
-     fdc:	7f858593          	addi	a1,a1,2040 # 87d0 <cmdtable+0x18c>
-     fe0:	4525                	li	a0,9
-     fe2:	c606                	sw	ra,12(sp)
-     fe4:	6c2010ef          	jal	ra,26a6 <LogMessage>
-     fe8:	37f1                	jal	fb4 <moduleInit>
-     fea:	6671                	lui	a2,0x1c
-     fec:	00001697          	auipc	a3,0x1
-     ff0:	90a68693          	addi	a3,a3,-1782 # 18f6 <moduleRecvParser>
-     ff4:	20060613          	addi	a2,a2,512 # 1c200 <_data_lma+0x12cd4>
-     ff8:	4585                	li	a1,1
-     ffa:	4501                	li	a0,0
-     ffc:	7bb000ef          	jal	ra,1fb6 <portUartCfg>
-    1000:	400017b7          	lui	a5,0x40001
-    1004:	0a87a703          	lw	a4,168(a5) # 400010a8 <_eusrstack+0x1fff90a8>
-    1008:	6685                	lui	a3,0x1
-    100a:	80068693          	addi	a3,a3,-2048 # 800 <_einit+0x7fc>
-    100e:	8f55                	or	a4,a4,a3
-    1010:	0ae7a423          	sw	a4,168(a5)
-    1014:	0ac7a703          	lw	a4,172(a5)
-    1018:	66a1                	lui	a3,0x8
-    101a:	4601                	li	a2,0
-    101c:	8f55                	or	a4,a4,a3
-    101e:	0ae7a623          	sw	a4,172(a5)
-    1022:	0ac7a703          	lw	a4,172(a5)
-    1026:	6691                	lui	a3,0x4
-    1028:	00000597          	auipc	a1,0x0
-    102c:	e7658593          	addi	a1,a1,-394 # e9e <modulePressPowerKey>
-    1030:	8f55                	or	a4,a4,a3
-    1032:	0ae7a623          	sw	a4,172(a5)
-    1036:	25800513          	li	a0,600
-    103a:	3e05                	jal	b6a <startTimer>
-    103c:	40b2                	lw	ra,12(sp)
-    103e:	0141                	addi	sp,sp,16
-    1040:	4360106f          	j	2476 <socketDelAll>
+00000fc6 <modulePowerOn>:
+     fc6:	1141                	addi	sp,sp,-16
+     fc8:	00008597          	auipc	a1,0x8
+     fcc:	80858593          	addi	a1,a1,-2040 # 87d0 <cmdtable+0x18c>
+     fd0:	4525                	li	a0,9
+     fd2:	c606                	sw	ra,12(sp)
+     fd4:	6d2010ef          	jal	ra,26a6 <LogMessage>
+     fd8:	37f1                	jal	fa4 <moduleInit>
+     fda:	6639                	lui	a2,0xe
+     fdc:	00001697          	auipc	a3,0x1
+     fe0:	91a68693          	addi	a3,a3,-1766 # 18f6 <moduleRecvParser>
+     fe4:	10060613          	addi	a2,a2,256 # e100 <_data_lma+0x4bd4>
+     fe8:	4585                	li	a1,1
+     fea:	4501                	li	a0,0
+     fec:	7cb000ef          	jal	ra,1fb6 <portUartCfg>
+     ff0:	400017b7          	lui	a5,0x40001
+     ff4:	0a87a703          	lw	a4,168(a5) # 400010a8 <_eusrstack+0x1fff90a8>
+     ff8:	6685                	lui	a3,0x1
+     ffa:	80068693          	addi	a3,a3,-2048 # 800 <_einit+0x7fc>
+     ffe:	8f55                	or	a4,a4,a3
+    1000:	0ae7a423          	sw	a4,168(a5)
+    1004:	0ac7a703          	lw	a4,172(a5)
+    1008:	66a1                	lui	a3,0x8
+    100a:	4601                	li	a2,0
+    100c:	8f55                	or	a4,a4,a3
+    100e:	0ae7a623          	sw	a4,172(a5)
+    1012:	0ac7a703          	lw	a4,172(a5)
+    1016:	6691                	lui	a3,0x4
+    1018:	00000597          	auipc	a1,0x0
+    101c:	e8658593          	addi	a1,a1,-378 # e9e <modulePressPowerKey>
+    1020:	8f55                	or	a4,a4,a3
+    1022:	0ae7a623          	sw	a4,172(a5)
+    1026:	25800513          	li	a0,600
+    102a:	3681                	jal	b6a <startTimer>
+    102c:	40b2                	lw	ra,12(sp)
+    102e:	0141                	addi	sp,sp,16
+    1030:	4460106f          	j	2476 <socketDelAll>
 
-00001044 <modulePowerOffDone>:
-    1044:	1141                	addi	sp,sp,-16
-    1046:	00007597          	auipc	a1,0x7
-    104a:	75e58593          	addi	a1,a1,1886 # 87a4 <cmdtable+0x160>
-    104e:	4525                	li	a0,9
-    1050:	c606                	sw	ra,12(sp)
-    1052:	654010ef          	jal	ra,26a6 <LogMessage>
-    1056:	3fb9                	jal	fb4 <moduleInit>
+00001034 <modulePowerOffDone>:
+    1034:	1141                	addi	sp,sp,-16
+    1036:	00007597          	auipc	a1,0x7
+    103a:	76e58593          	addi	a1,a1,1902 # 87a4 <cmdtable+0x160>
+    103e:	4525                	li	a0,9
+    1040:	c606                	sw	ra,12(sp)
+    1042:	664010ef          	jal	ra,26a6 <LogMessage>
+    1046:	3fb9                	jal	fa4 <moduleInit>
+    1048:	6639                	lui	a2,0xe
+    104a:	4681                	li	a3,0
+    104c:	10060613          	addi	a2,a2,256 # e100 <_data_lma+0x4bd4>
+    1050:	4581                	li	a1,0
+    1052:	4501                	li	a0,0
+    1054:	763000ef          	jal	ra,1fb6 <portUartCfg>
     1058:	400016b7          	lui	a3,0x40001
     105c:	0ac6a783          	lw	a5,172(a3) # 400010ac <_eusrstack+0x1fff90ac>
     1060:	6705                	lui	a4,0x1
@@ -2198,7 +2198,7 @@ Disassembly of section .text:
     128e:	4525                	li	a0,9
     1290:	c606                	sw	ra,12(sp)
     1292:	414010ef          	jal	ra,26a6 <LogMessage>
-    1296:	3b39                	jal	fb4 <moduleInit>
+    1296:	3339                	jal	fa4 <moduleInit>
     1298:	400017b7          	lui	a5,0x40001
     129c:	0ac7a703          	lw	a4,172(a5) # 400010ac <_eusrstack+0x1fff90ac>
     12a0:	66a1                	lui	a3,0x8
@@ -2216,7 +2216,7 @@ Disassembly of section .text:
     12c6:	650d                	lui	a0,0x3
     12c8:	4601                	li	a2,0
     12ca:	00000597          	auipc	a1,0x0
-    12ce:	d0c58593          	addi	a1,a1,-756 # fd6 <modulePowerOn>
+    12ce:	cfc58593          	addi	a1,a1,-772 # fc6 <modulePowerOn>
     12d2:	ee050513          	addi	a0,a0,-288 # 2ee0 <protocolSend+0x4a>
     12d6:	895ff0ef          	jal	ra,b6a <startTimer>
     12da:	40b2                	lw	ra,12(sp)
@@ -2379,7 +2379,7 @@ Disassembly of section .text:
     1498:	4705                	li	a4,1
     149a:	00f77d63          	bgeu	a4,a5,14b4 <netConnectTask+0x182>
     149e:	80018e23          	sb	zero,-2020(gp) # 20000b44 <moduleCtrl>
-    14a2:	3e15                	jal	fd6 <modulePowerOn>
+    14a2:	3615                	jal	fc6 <modulePowerOn>
     14a4:	481c                	lw	a5,16(s0)
     14a6:	50f6                	lw	ra,124(sp)
     14a8:	5466                	lw	s0,120(sp)
@@ -3906,7 +3906,7 @@ Disassembly of section .text:
     2610:	0542                	slli	a0,a0,0x10
     2612:	8141                	srli	a0,a0,0x10
     2614:	8082                	ret
-    2616:	00050703          	lb	a4,0(a0) # 1000 <modulePowerOn+0x2a>
+    2616:	00050703          	lb	a4,0(a0) # 1000 <modulePowerOn+0x3a>
     261a:	0087d613          	srli	a2,a5,0x8
     261e:	0505                	addi	a0,a0,1
     2620:	8fb9                	xor	a5,a5,a4
