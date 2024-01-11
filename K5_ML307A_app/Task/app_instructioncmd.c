@@ -50,6 +50,7 @@ const instruction_s insCmdTable[] =
     {SMSREPLY_INS, "SMSREPLY"},
     {BF_INS, "BF"},
     {CF_INS, "CF"},
+    {ADCCAL_INS, "ADCCAL"},
 };
 
 static insMode_e mode123;
@@ -1408,6 +1409,34 @@ void doCFInstruction(ITEM *item, char *message)
     strcpy(message, "CF OK");
 }
 
+void doAdccalInstrucion(ITEM *item, char *message)
+{
+    float vol;
+    uint8_t type;
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+		sprintf(message, "ADC cal param: %f", sysparam.adccal);
+    }
+    else
+    {
+        vol = atof(item->item_data[1]);
+        type = atoi(item->item_data[2]);
+        if (type == 0)
+        {
+        	float x;
+            x = portGetAdcVol(ADC_CHANNEL);
+            sysparam.adccal = vol / x;
+        }
+        else
+        {
+            sysparam.adccal = vol;
+        }
+        paramSaveAll();
+		sprintf(message, "Update ADC calibration parameter to %f", sysparam.adccal);
+    }
+}
+
+
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1527,6 +1556,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case CF_INS:
            	doCFInstruction(item, message);
            	break;
+        case ADCCAL_INS:
+        	doAdccalInstrucion(item, message);
+        	break;
         default:
             if (mode == SMS_MODE)
             {

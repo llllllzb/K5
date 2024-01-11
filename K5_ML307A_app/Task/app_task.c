@@ -1187,7 +1187,7 @@ static void voltageCheckTask(void)
     LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f", x, sysinfo.outsidevoltage);
 
 	//电池保护
-    if (sysinfo.outsidevoltage < 2.4 && sysinfo.canRunFlag == 1)
+    if (sysinfo.outsidevoltage < 2.9 && sysinfo.canRunFlag == 1)
     {
 		protectTick++;
 		if (protectTick >= 5)
@@ -1199,7 +1199,7 @@ static void voltageCheckTask(void)
 			portDebugUartCfg(0);
 		}
     }
-	else if (sysinfo.outsidevoltage >= 2.7 && sysinfo.canRunFlag == 0)
+	else if (sysinfo.outsidevoltage >= 3.0 && sysinfo.canRunFlag == 0)
 	{
 		protectTick++;
 		if (protectTick >= 5)
@@ -1217,37 +1217,37 @@ static void voltageCheckTask(void)
 		protectTick = 0;
 	}
     
-//    //低电报警
-//    if (sysinfo.outsidevoltage < sysinfo.lowvoltage)
-//    {
-//        lowpowertick++;
-//        if (lowpowertick >= 30)
-//        {
-//            if (lowwflag == 0)
-//            {
-//                lowwflag = 1;
-//                LogPrintf(DEBUG_ALL, "power supply too low %.2fV", sysinfo.outsidevoltage);
-//                //低电报警
-//                jt808UpdateAlarm(JT808_LOWVOLTAE_ALARM, 1);
-//                alarmRequestSet(ALARM_LOWV_REQUEST);
-//                lbsRequestSet(DEV_EXTEND_OF_MY);
-//                wifiRequestSet(DEV_EXTEND_OF_MY);
-//                gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-//            }
-//
-//        }
-//    }
-//    else
-//    {
-//        lowpowertick = 0;
-//    }
-//
-//
-//    if (sysinfo.outsidevoltage >= sysinfo.lowvoltage + 0.5)
-//    {
-//        lowwflag = 0;
-//        jt808UpdateAlarm(JT808_LOWVOLTAE_ALARM, 0);
-//    }
+    //低电报警
+    if (sysinfo.outsidevoltage < sysinfo.lowvoltage)
+    {
+        lowpowertick++;
+        if (lowpowertick >= 30)
+        {
+            if (lowwflag == 0)
+            {
+                lowwflag = 1;
+                LogPrintf(DEBUG_ALL, "power supply too low %.2fV", sysinfo.outsidevoltage);
+                //低电报警
+                jt808UpdateAlarm(JT808_LOWVOLTAE_ALARM, 1);
+                alarmRequestSet(ALARM_LOWV_REQUEST);
+                lbsRequestSet(DEV_EXTEND_OF_MY);
+                wifiRequestSet(DEV_EXTEND_OF_MY);
+                gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+            }
+
+        }
+    }
+    else
+    {
+        lowpowertick = 0;
+    }
+
+
+    if (sysinfo.outsidevoltage >= sysinfo.lowvoltage + 0.5)
+    {
+        lowwflag = 0;
+        jt808UpdateAlarm(JT808_LOWVOLTAE_ALARM, 0);
+    }
 
 
 }
