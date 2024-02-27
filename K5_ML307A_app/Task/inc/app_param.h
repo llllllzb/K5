@@ -20,9 +20,9 @@
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 //实际是0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x2B
 #define BOOT_PARAM_FLAG         0xB0
-#define OTA_PARAM_FLAG          0x1C
+#define OTA_PARAM_FLAG          0x1E
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.3.5"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.3.6"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -112,6 +112,7 @@ typedef struct
 	uint16_t mode4Alarm;
 	uint8_t smsreply;
 	uint8_t bf;
+	uint8_t batsel;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

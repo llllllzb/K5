@@ -53,6 +53,7 @@ typedef enum
     BF_INS,
     CF_INS,
     ADCCAL_INS,
+    BATSEL_INS,
 } INSTRUCTIONID;
 
 

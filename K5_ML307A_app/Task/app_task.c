@@ -1184,7 +1184,7 @@ static void voltageCheckTask(void)
     sysinfo.outsidevoltage = x * sysparam.adccal;
     sysinfo.insidevoltage = sysinfo.outsidevoltage;
 
-    LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f", x, sysinfo.outsidevoltage);
+    //LogPrintf(DEBUG_ALL, "x:%.2f, outsidevoltage:%.2f bat:%d%%", x, sysinfo.outsidevoltage ,getBatteryLevel());
 
 	//电池保护
     if (sysinfo.outsidevoltage < 2.9 && sysinfo.canRunFlag == 1)
@@ -1279,6 +1279,7 @@ static void modeShutDownQuickly(void)
     if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && primaryServerIsReady())
     {
     	//sysparam.gpsuploadgap>=60时，由于gpsrequest==0会关闭kernal,导致一些以1s为时基的任务不计时，会导致gps上报不及时，acc状态无法切换等
+    	//比如运动的情况下，由于没有GPS_REQUEST_ACC_CTL，这里会导致关闭kernal
     	if ((sysparam.MODE == MODE21 || sysparam.MODE == MODE23) && getTerminalAccState() && sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX)
     	{
 			delaytick = 0;
@@ -1729,6 +1730,23 @@ static void sysRunTimeCnt(void)
     }
 }
 
+static void moduleErrDet(void)
+{
+	static uint8_t tick = 0;
+	if (isModulePowerOff() && getTerminalAccState())
+	{
+		tick++;
+		if (tick >= 60)
+		{
+			modulePowerOn();
+		}
+	}
+	else
+	{
+		tick = 0;
+	}
+	//LogPrintf(DEBUG_ALL, "tick = %d", tick);
+}
 
 /**************************************************
 @bref		模式运行
@@ -1763,6 +1781,7 @@ static void modeRun(void)
             sysRunTimeCnt();
             modeShutDownQuickly();
             gpsUploadPointToServer();
+            moduleErrDet();
             break;
         case MODE4:
 			sysRunTimeCnt();
@@ -1806,6 +1825,16 @@ static void modeDone(void)
 	static uint8_t motionTick = 0;
 	//进入到这个模式就把sysinfo.canRunFlag置零，以免别的唤醒源让GPS未经电压检测就起来工作
 	sysinfo.canRunFlag = 0;
+	static uint8_t tick = 0;
+	if (isModulePowerOff() == 0)
+	{
+		if (++tick >= 60)
+			modulePowerOff();
+	}
+	else
+	{
+		tick = 0;
+	}
 	bleTryInit();
     if (sysinfo.gpsRequest)
     {
@@ -1842,23 +1871,6 @@ static void modeDone(void)
 			}
 
 		}
-//		/*高电平，运动*/
-//		if (GSINT_DET)
-//		{
-//			motionTick = 0;
-//		}
-//		/*低电平，静止*/
-//		else
-//		{
-//			if (motionTick++ >= 5)
-//			{
-//				if (sysinfo.sleep)
-//				{
-//					tmos_set_event(sysinfo.taskId, APP_TASK_STOP_EVENT);
-//					motionTick = 0;
-//				}
-//			}
-//		}
     }
 }
 

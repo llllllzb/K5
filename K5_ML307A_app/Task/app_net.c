@@ -413,20 +413,25 @@ static void modulePowerOffProcess(void)
 	startTimer(37, modulePowerOffRelease, 0);
 	LogMessage(DEBUG_ALL, "modulePowerOffProcess");
 }
+
 /**************************************************
 @bref		模组关机
 @param
 @return
 @note
+关模组的时间不宜太长，太长可能会因为休眠之前模组关机
+同时又立马重新唤醒开启模组，导致最终的结果就是关机
 **************************************************/
 
 void modulePowerOff(void)
 {
     LogMessage(DEBUG_ALL, "modulePowerOff");
     portUartCfg(APPUSART0, 0, 57600, NULL);
+    POWER_OFF;
     RSTKEY_HIGH;
     PWRKEY_HIGH;
-    startTimer(5, modulePowerOffProcess, 0);
+    moduleInit();
+    //startTimer(5, modulePowerOffProcess, 0);
     sysinfo.moduleRstFlag = 1;
     socketDelAll();
 }
@@ -456,8 +461,8 @@ void moduleReset(void)
     moduleInit();
     PWRKEY_HIGH;
     RSTKEY_HIGH;
-    startTimer(10, modulePowerOff, 0);
-    startTimer(120, modulePowerOn, 0);
+    POWER_OFF;
+    startTimer(20, modulePowerOn, 0);
     socketDelAll();
 }
 

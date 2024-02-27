@@ -130,6 +130,7 @@ void paramInit(void)
 		sysparam.ServerPort = 7700;
 		sysparam.gpsuploadgap = 60;
 		sysparam.gapMinutes = 60;
+		sysparam.batsel = 1;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

@@ -51,6 +51,7 @@ const instruction_s insCmdTable[] =
     {BF_INS, "BF"},
     {CF_INS, "CF"},
     {ADCCAL_INS, "ADCCAL"},
+    {BATSEL_INS, "BATSEL"},
 };
 
 static insMode_e mode123;
@@ -445,7 +446,6 @@ static void doModeInstruction(ITEM *item, char *message)
                                 "The device switches to mode 2 and uploads the position every %d seconds when moving, and every %d minutes when standing still",
                                 sysparam.gpsuploadgap, sysparam.gapMinutes);
                     }
-
                 }
                 break;
             case 3:
@@ -1436,6 +1436,20 @@ void doAdccalInstrucion(ITEM *item, char *message)
     }
 }
 
+void doBatSelInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+	{
+		sprintf(message, "Bat sel is %s battery", sysparam.batsel ? "High-voltage" : "Atmospheric");
+	}
+	else
+	{
+		sysparam.batsel = atoi(item->item_data[1]);
+		sprintf(message, "Update bat sel to %s battery", sysparam.batsel ? "High-voltage" : "Atmospheric");
+		paramSaveAll();
+	}
+}
+
 
 
 /*--------------------------------------------------------------------------------------*/
@@ -1558,6 +1572,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
            	break;
         case ADCCAL_INS:
         	doAdccalInstrucion(item, message);
+        	break;
+        case BATSEL_INS:
+			doBatSelInstruction(item, message);
         	break;
         default:
             if (mode == SMS_MODE)

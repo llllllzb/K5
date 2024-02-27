@@ -556,18 +556,46 @@ void gpsRestoreDataSend(gpsRestore_s *grs, char *dest	, uint16_t *len)
 uint8_t getBatteryLevel(void)
 {
     uint8_t level = 0;
-    if (sysinfo.insidevoltage > 4.1)
+    if (sysparam.batsel)
     {
-        level = 100;
+	    if (sysinfo.insidevoltage >= 4.2)
+	    {
+	        level = 100;
 
-    }
-    else if (sysinfo.insidevoltage < 3.3)
-    {
-        level = 0;
+	    }
+	    else if (sysinfo.insidevoltage < 4.2 && sysinfo.insidevoltage >= 3.6)
+	    {
+	        level = (uint8_t)(((sysinfo.insidevoltage - 3.6) / 0.6 * 0.8 + 0.2) * 100);
+	    }
+	    else if (sysinfo.insidevoltage < 3.6 && sysinfo.insidevoltage >= 3.0)
+	    {
+	        level = (uint8_t)((sysinfo.insidevoltage - 3.0) / 0.6 * 0.2 * 100);
+	    }
+	    else
+	    {
+			level = 0;
+	    }
     }
     else
     {
-        level = (uint8_t)((sysinfo.insidevoltage - 3.3) / 0.8 * 100);
+	    if (sysinfo.insidevoltage >= 4.1)
+	    {
+	        level = 100;
+
+	    }
+	    else if (sysinfo.insidevoltage < 4.1 && sysinfo.insidevoltage >= 3.6)
+	    {
+	        level = (uint8_t)(((sysinfo.insidevoltage - 3.6) / 0.5 * 0.8 + 0.2) * 100);
+	    }
+	    else if (sysinfo.insidevoltage < 3.6 && sysinfo.insidevoltage >= 3.0)
+	    {
+	        level = (uint8_t)((sysinfo.insidevoltage - 3.0) / 0.6 * 0.2 * 100);
+	    }
+	    else
+	    {
+			level = 0;
+	    }
+
     }
     return level;
 }
