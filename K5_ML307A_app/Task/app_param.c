@@ -84,7 +84,7 @@ void paramDefaultInit(uint8_t level)
     strcpy(sysparam.Server, "112.74.130.160");
     sysparam.ServerPort = 7700;
     sysparam.gpsuploadgap = 60;
-    sysparam.gapMinutes = 60;
+    sysparam.gapMinutes = 0;
     dynamicParam.runTime = 0;
     dynamicParam.startUpCnt = 0;
     sysparam.accctlgnss = 1;
@@ -129,7 +129,7 @@ void paramInit(void)
 		strcpy(sysparam.Server, "112.74.130.160");
 		sysparam.ServerPort = 7700;
 		sysparam.gpsuploadgap = 60;
-		sysparam.gapMinutes = 60;
+		sysparam.gapMinutes =0;
 		sysparam.batsel = 1;
 		paramSaveAll();
     }

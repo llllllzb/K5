@@ -20,9 +20,9 @@
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 // µº  «0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x2B
 #define BOOT_PARAM_FLAG         0xB0
-#define OTA_PARAM_FLAG          0x1E
+#define OTA_PARAM_FLAG          0x1F
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.3.6"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.3.7"
 
 
 #define JT808_PROTOCOL_TYPE			8

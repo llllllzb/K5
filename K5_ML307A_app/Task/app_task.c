@@ -544,6 +544,8 @@ static void gpsRequestTask(void)
     static uint16_t gpsInvalidTick = 0;
 	static uint8_t gpsInvalidFlag = 0, gpsInvalidFlagTick = 0;
 	uint16_t gpsInvalidparam;
+	/* 同步flag */
+	static uint8_t flag = 0;
 
     switch (sysinfo.gpsFsm)
     {
@@ -556,6 +558,7 @@ static void gpsRequestTask(void)
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
+                flag = 1;
             }
             break;
         case GPSWATISTATUS:
@@ -579,6 +582,7 @@ static void gpsRequestTask(void)
             	{
 					saveGpsHistory();
 					agpsRequestClear();
+					flag = 0;
             	}
                 gpsClose();
             }
@@ -587,6 +591,7 @@ static void gpsRequestTask(void)
             gpsChangeFsmState(GPSCLOSESTATUS);
             break;
     }
+
     /* 只要ACCON就认为是开启GPS， 所以要忽略GPS的开关与否 */
     if (getTerminalAccState() == 0)
     {
@@ -601,6 +606,13 @@ static void gpsRequestTask(void)
         gpsInvalidFlag = 0;
         gpsInvalidFlagTick = 0;
         return;
+    }
+    if (flag == 0)
+    {
+        gpsInvalidTick = 0;
+        gpsInvalidFlag = 0;
+        gpsInvalidFlagTick = 0;
+		return;
     }
     gpsInvalidparam = (sysparam.gpsuploadgap < 60) ? 60 : sysparam.gpsuploadgap;
     LogPrintf(DEBUG_ALL, "gpsInvalidTick:%d  gpsInvalidparam:%d", gpsInvalidTick, gpsInvalidparam);
@@ -622,6 +634,7 @@ static void gpsRequestTask(void)
     }
 
 }
+
 
 
 /**************************************************
@@ -664,9 +677,10 @@ static void gpsUplodOnePointTask(void)
         return;
     }
     runtick = 0;
-    if (++uploadtick >= 10)
+    ++uploadtick;
+    if (gpsinfo->used_star >= 10 || gpsinfo->pdop <= 3.60 || gpsinfo->fixmode >= 3)
     {
-        uploadtick = 0;
+		uploadtick = 0;
         if (sysinfo.flag123)
         {
             dorequestSend123();
@@ -675,6 +689,18 @@ static void gpsUplodOnePointTask(void)
         jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
         gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
     }
+    else if (uploadtick >= 5)
+    {
+		uploadtick = 0;
+        if (sysinfo.flag123)
+        {
+            dorequestSend123();
+        }
+        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
+        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
+        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+    }
+
 
 }
 
@@ -827,7 +853,7 @@ void alarmRequestTask(void)
 @note
 **************************************************/
 
-static void motionStateUpdate(motion_src_e src, motionState_e newState)
+void motionStateUpdate(motion_src_e src, motionState_e newState)
 {
     char type[20];
 
@@ -2221,6 +2247,7 @@ void wifiRequestSet(uint8_t ext)
 {
     sysinfo.wifiRequest = 1;
     sysinfo.wifiExtendEvt |= ext;
+    LogMessage(DEBUG_ALL, "wifiRequestSet==>ok");
 }
 
 /**************************************************
@@ -2246,28 +2273,32 @@ void wifiRequestClear(void)
 
 static void wifiRequestTask(void)
 {
+	static uint8_t tick = 0;
     if (sysinfo.wifiRequest == 0)
-    {
         return;
-    }
     if (primaryServerIsReady() == 0)
         return;
-
-    sysinfo.wifiRequest = 0;
-    if (sysparam.protocol == ZT_PROTOCOL_TYPE)
-    {
-    	//有AGPS先等AGPS数据读取完完再发WIFI请求
-    	if (sysinfo.agpsRequest)
-    	{
-        	startTimer(70, moduleGetWifiScan, 0);
-        }
-        else
-        {
-			startTimer(30, moduleGetWifiScan, 0);
-        }
-        wifiTimeOutId = startTimer(300, wifiTimeout, 0);
-    }
+	//有AGPS先等AGPS数据读取完完再发WIFI请求
+	if (sysinfo.agpsRequest)
+	{
+		tick++;
+		if (tick >= 15)
+		{
+			tick = 0;
+			goto __WIFI;
+		}
+		return;
+	}
+__WIFI:
+	tick = 0;
+	sysinfo.wifiRequest = 0;
+	if (sysparam.protocol == ZT_PROTOCOL_TYPE && wifiTimeOutId == -1)
+	{
+		startTimer(20, moduleGetWifiScan, 0);		 
+		wifiTimeOutId = startTimer(300, wifiTimeout, 0);
+	}
 }
+
 
 /**************************************************
 @bref		唤醒设备
@@ -2329,9 +2360,13 @@ static uint8_t getWakeUpState(void)
     {
 		return 6;
     }
+    if (sysinfo.wifiExtendEvt != 0)
+   	{
+		return 7;
+   	}
     if (sysparam.MODE == MODE4 && isModeRun() && isModuleOfflineStatus() == 0)
     {
-    	return 7;
+    	return 8;
     }
     //非0 时强制不休眠
     return 0;

@@ -1017,7 +1017,9 @@ void portGsensorCtl(uint8_t onoff)
 	        GPIOB_SetBits(GSINT_PIN);
 	    }
         PFIC_EnableIRQ(GPIO_B_IRQn);
+	    terminalAccoff();
         motionClear();
+        motionStateUpdate(SYS_SRC, MOTION_STATIC);
     }
     else
     {

@@ -66,6 +66,7 @@ void hbtRspSuccess(void)
 static void moduleRspTimeout(void)
 {
     timeOutId = -1;
+    LogMessage(DEBUG_ALL, "moduleRspTimeout");
     moduleReset();
 }
 

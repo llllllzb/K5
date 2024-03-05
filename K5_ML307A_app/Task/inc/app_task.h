@@ -197,6 +197,7 @@ void lbsRequestSet(uint8_t ext);
 void wifiRequestSet(uint8_t ext);
 
 void motionOccur(void);
+void motionStateUpdate(motion_src_e src, motionState_e newState);
 
 void modeTryToStop(void);
 uint8_t isModeDone(void);

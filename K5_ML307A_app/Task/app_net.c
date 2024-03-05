@@ -111,14 +111,14 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     cmdNode_s *currentnode;
     //如果链表头未创建，则创建链表头。
     WAKEMODULE;
-    if (currentcmd == MWIFISCANSTART_CMD)
-    {
-		wakeUpByInt(1, 28);
-    }
-    else
-    {
+//    if (currentcmd == MWIFISCANSTART_CMD)
+//    {
+//		wakeUpByInt(1, 28);
+//    }
+//    else
+//    {
 		wakeUpByInt(1, 8);
-    }
+//    }
     if (headNode == NULL)
     {
         headNode = malloc(sizeof(cmdNode_s));
@@ -247,7 +247,7 @@ void outputNode(void)
             }
             else if (currentnode->currentcmd == MWIFISCANSTART_CMD)
             {
-				tickRange = 125;
+				tickRange = 10;
             }
             else
             {
@@ -962,6 +962,7 @@ static void cgregParser(uint8_t *buf, uint16_t len)
                         case 4:
                             moduleState.cid = strtoul(restore + 1, NULL, 16);
                             LogPrintf(DEBUG_ALL, "CID=%s,0x%X", restore, moduleState.cid);
+                            sendModuleCmd(CEREG_CMD, "0");
                             break;
                     }
                     restore[0] = 0;
@@ -1256,34 +1257,34 @@ static void qisendParser(uint8_t *buf, uint16_t len)
 **************************************************/
 void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
 {
-    int index;
-    uint8_t *rebuf, i;
-    int16_t relen;
-    char restore[20];
-    uint8_t numb;
-    WIFIINFO wifiList = { 0 };
-    rebuf = buf;
-    relen = len;
-    index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
-    wifiList.apcount = 0;
-    while (index >= 0)
-    {
-        rebuf += index + 16;
-        relen -= index + 16;
-        index = getCharIndex(rebuf, relen, ',');
-        if (index < 0 || index > 2)
-        {
+	int index;
+	uint8_t *rebuf, i;
+	int16_t relen;
+	char restore[20];
+	uint8_t numb;
+	WIFIINFO wifiList = { 0 };
+	rebuf = buf;
+	relen = len;
+	index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
+	wifiList.apcount = 0;
+	while (index >= 0)
+	{
+		rebuf += index + 16;
+		relen -= index + 16;
+		index = getCharIndex(rebuf, relen, ',');
+		if (index < 0 || index > 2)
+		{
 			tmos_memcpy(restore, rebuf, 1);
 			restore[1] = 0;
 			numb = atoi(restore);
-			if (numb == 0 && wifiList.apcount == 0)
+			if (numb == 0 && wifiList.apcount == 0 && sysinfo.wifiExtendEvt != 0)
 			{
 				wifiRspSuccess();
 				sysinfo.wifiExtendEvt = 0;
 				lbsRequestSet(DEV_EXTEND_OF_MY);
 			}
-        	break;
-        }
+			break;
+		}
 		tmos_memcpy(restore, rebuf, index);
 		restore[index] = 0;
 		numb = atoi(restore);
@@ -1291,50 +1292,51 @@ void mwifiscaninfoParser(uint8_t *buf, uint16_t len)
 		rebuf += index + 1;
 		relen -= index + 1;
 		index = getCharIndex(rebuf, relen, '"');
-        if (numb != 0 && wifiList.apcount < WIFIINFOMAX)
-        {
-            memcpy(restore, rebuf, index);
-            restore[index] = 0;
-            LogPrintf(DEBUG_ALL, "WIFI(%d):[%s]", numb, restore);
-            wifiList.ap[wifiList.apcount].signal = 0;
-            /*  */
-            if (strncmp(restore, "000000000000", 12) == 0 || strncmp(restore, "FFFFFFFFFFFF", 12) == 0)
-            {
+		if (numb != 0 && wifiList.apcount < WIFIINFOMAX)
+		{
+			memcpy(restore, rebuf, index);
+			restore[index] = 0;
+			LogPrintf(DEBUG_ALL, "WIFI(%d):[%s]", numb, restore);
+			wifiList.ap[wifiList.apcount].signal = 0;
+			/*	*/
+			if (strncmp(restore, "000000000000", 12) == 0 || strncmp(restore, "FFFFFFFFFFFF", 12) == 0)
+			{
 				LogPrintf(DEBUG_ALL, "WIFI mac error:%s", restore);
-            }
-            else
-           	{
+			}
+			else
+			{
 				changeHexStringToByteArray(wifiList.ap[wifiList.apcount].ssid, restore, 6);
-            	wifiList.apcount++;
-           	}
-        }
-        index = getCharIndex(rebuf, relen, '\r');
-        rebuf += index;
-        relen -= index;
-        index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
-    }
-	if (wifiList.apcount != 0)
-    {
-    	if (wifiList.apcount < 4)
-    	{
-			lbsRequestSet(DEV_EXTEND_OF_MY);
-    	}
-    	else 
-    	{
-	        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
-	        {
-	            protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
-	        }
-	        if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_BLE)
-	        {
-	            protocolSend(BLE_LINK, PROTOCOL_F3, &wifiList);
-	        }
-	        lbsRequestClear();
+				wifiList.apcount++;
+			}
 		}
-        sysinfo.wifiExtendEvt = 0;
-        wifiRspSuccess();
-    }
+		index = getCharIndex(rebuf, relen, '\r');
+		rebuf += index;
+		relen -= index;
+		index = my_getstrindex((char *)rebuf, "+MWIFISCANINFO:", relen);
+	}
+	if (wifiList.apcount != 0)
+	{
+		if (wifiList.apcount < 3 && sysinfo.wifiExtendEvt != 0)
+		{
+			lbsRequestSet(DEV_EXTEND_OF_MY);
+		}
+		else 
+		{
+			if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_MY)
+			{
+				protocolSend(NORMAL_LINK, PROTOCOL_F3, &wifiList);
+			}
+			if (sysinfo.wifiExtendEvt & DEV_EXTEND_OF_BLE)
+			{
+				protocolSend(BLE_LINK, PROTOCOL_F3, &wifiList);
+			}
+			lbsRequestClear();
+		}
+		sysinfo.wifiExtendEvt = 0;
+		wifiRspSuccess();
+	}
 }
+
 
 //+CGSN:864606060177986
 static void cgsnParser(uint8_t *buf, uint16_t len)
@@ -2364,7 +2366,7 @@ void moduleGetCsq(void)
 
 void moduleGetLbs(void)
 {
-    sendModuleCmd(CGREG_CMD, "?");
+    sendModuleCmd(CEREG_CMD, "2");
     sendModuleCmd(CEREG_CMD, "?");
 }
 /**************************************************
