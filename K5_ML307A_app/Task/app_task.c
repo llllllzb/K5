@@ -417,7 +417,7 @@ static void hdGpsCfg(void)
 	hdGpsColdStart();
 	//hdGpsHotStart();
 	DelayMs(1);
-	hdGpsGsvCtl(0);
+	//hdGpsGsvCtl(0);
 	startTimer(10, hdGpsInjectLocation, 0);
 }
 
@@ -649,6 +649,7 @@ static void gpsUplodOnePointTask(void)
     gpsinfo_s *gpsinfo;
     static uint16_t runtick = 0;
     static uint8_t uploadtick = 0;
+    uint8_t total, i;
     //判断是否有请求该事件
     if (sysinfo.gpsOnoff == 0)
         return;
@@ -678,7 +679,21 @@ static void gpsUplodOnePointTask(void)
     }
     runtick = 0;
     ++uploadtick;
-    if (gpsinfo->used_star >= 10 || gpsinfo->pdop <= 3.60 || gpsinfo->fixmode >= 3)
+    for (i = 0; i < sizeof(gpsinfo->gpsCn); i++)
+    {
+        if (gpsinfo->gpsCn[i] >= 40)
+            total++;
+    }
+    for (i = 0; i < sizeof(gpsinfo->beidouCn); i++)
+    {
+        if (gpsinfo->beidouCn[i] >= 40)
+            total++;
+    }
+    if ((gpsinfo->used_star >= 10 && gpsinfo->pdop < 3.30) ||
+        (gpsinfo->used_star >= 8 && total >= 10) ||
+        (gpsinfo->used_star >= 10 && total >= 8) ||
+         gpsinfo->used_star >= 13 ||
+         gpsinfo->pdop <= 1.90)
     {
 		uploadtick = 0;
         if (sysinfo.flag123)
@@ -689,7 +704,7 @@ static void gpsUplodOnePointTask(void)
         jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
         gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
     }
-    else if (uploadtick >= 5)
+    else if (uploadtick >= 10)
     {
 		uploadtick = 0;
         if (sysinfo.flag123)
@@ -1943,7 +1958,7 @@ static void sysAutoReq(void)
 {
     uint16_t year;
     uint8_t month, date, hour, minute, second;
-
+	static uint16_t noNetTick = 0;
     if (sysparam.MODE == MODE1 || sysparam.MODE == MODE21)
     {
         portGetRtcDateTime(&year, &month, &date, &hour, &minute, &second);
@@ -1976,7 +1991,7 @@ static void sysAutoReq(void)
 		{
 			sysinfo.mode4NoNetTick++;
 			LogPrintf(DEBUG_ALL, "mode4NoNetTick:%d", sysinfo.mode4NoNetTick);
-			if (sysinfo.mode4NoNetTick >= 5)
+			if (sysinfo.mode4NoNetTick >= 60)
 			{
 				sysinfo.mode4NoNetTick = 0;
                 LogMessage(DEBUG_ALL, "mode 4 restoration network");
@@ -2009,6 +2024,26 @@ static void sysAutoReq(void)
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
                 }
             }
+        }
+        if (isModeDone() && sysparam.MODE == MODE2)
+        {
+			noNetTick++;
+			LogPrintf(DEBUG_ALL, "mode2NoNetTick:%d", noNetTick);
+			if (noNetTick >= 60)
+			{
+				noNetTick = 0;
+				LogMessage(DEBUG_ALL, "mode 2 restoration network");
+                if (sysinfo.kernalRun == 0)
+                {
+                	volCheckRequestSet();
+                    tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+                    changeModeFsm(MODE_START);
+                }
+			}
+        }
+        else
+        {
+			noNetTick = 0;
         }
     }
 }
@@ -2432,11 +2467,11 @@ void autoSleepTask(void)
 static void rebootEveryDay(void)
 {
     sysinfo.sysTick++;
-    //    if (sysinfo.sysTick < 86400)
-    //        return ;
-    //    if (sysinfo.gpsRequest != 0)
-    //        return ;
-    //    portSysReset();
+    if (sysinfo.sysTick < 86400)
+        return ;
+    if (sysinfo.gpsRequest != 0)
+        return ;
+    portSysReset();
 }
 
 static void tiltDetectionTask(void)

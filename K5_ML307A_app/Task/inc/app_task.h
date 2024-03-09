@@ -49,7 +49,7 @@
 #define APP_TASK_STOP_EVENT				0x0008
 #define APP_TASK_ONEMINUTE_EVENT		0x0010
 
-#define UART_RECV_BUFF_SIZE 			512
+#define UART_RECV_BUFF_SIZE 			768
 #define DEBUG_BUFF_SIZE					256
 
 #define MODE_CHOOSE						0
