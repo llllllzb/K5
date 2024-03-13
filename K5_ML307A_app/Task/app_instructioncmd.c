@@ -52,6 +52,7 @@ const instruction_s insCmdTable[] =
     {CF_INS, "CF"},
     {ADCCAL_INS, "ADCCAL"},
     {BATSEL_INS, "BATSEL"},
+    {MOTIONDET_INS, "MOTIONDET"},
 };
 
 static insMode_e mode123;
@@ -1051,6 +1052,28 @@ static void doBleServerInstruction(ITEM *item, char *message)
     }
 }
 
+static void doMotionDetInstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Motion param %d,%d,%d", sysparam.gsdettime, sysparam.gsValidCnt, sysparam.gsInvalidCnt);
+    }
+    else
+    {
+        sysparam.gsdettime = atoi(item->item_data[1]);
+        sysparam.gsValidCnt = atoi(item->item_data[2]);
+        sysparam.gsInvalidCnt = atoi(item->item_data[3]);
+
+        sysparam.gsdettime = (sysparam.gsdettime > motionGetSize() ||
+                              sysparam.gsdettime == 0) ? motionGetSize() : sysparam.gsdettime;
+        sysparam.gsValidCnt = (sysparam.gsValidCnt > sysparam.gsdettime ||
+                               sysparam.gsValidCnt == 0) ? sysparam.gsdettime : sysparam.gsValidCnt;
+
+        sysparam.gsInvalidCnt = sysparam.gsInvalidCnt > sysparam.gsValidCnt ? sysparam.gsValidCnt : sysparam.gsInvalidCnt;
+        paramSaveAll();
+        sprintf(message, "Update motion param to %d,%d,%d", sysparam.gsdettime, sysparam.gsValidCnt, sysparam.gsInvalidCnt);
+    }
+}
 
 void doTimerInstrucion(ITEM *item, char *message)
 {
@@ -1575,6 +1598,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case BATSEL_INS:
 			doBatSelInstruction(item, message);
+        	break;
+        case MOTIONDET_INS:
+			doMotionDetInstruction(item, message);
         	break;
         default:
             if (mode == SMS_MODE)

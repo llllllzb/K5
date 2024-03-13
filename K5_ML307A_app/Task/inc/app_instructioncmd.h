@@ -54,6 +54,7 @@ typedef enum
     CF_INS,
     ADCCAL_INS,
     BATSEL_INS,
+    MOTIONDET_INS,
 } INSTRUCTIONID;
 
 

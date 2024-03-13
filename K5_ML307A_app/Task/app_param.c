@@ -131,6 +131,9 @@ void paramInit(void)
 		sysparam.gpsuploadgap = 60;
 		sysparam.gapMinutes =0;
 		sysparam.batsel = 1;
+	    sysparam.gsdettime=0;
+	    sysparam.gsValidCnt=0;
+	    sysparam.gsInvalidCnt=0;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

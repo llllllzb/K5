@@ -195,7 +195,7 @@ void alarmRequestClear(uint16_t request);
 
 void lbsRequestSet(uint8_t ext);
 void wifiRequestSet(uint8_t ext);
-
+uint8_t motionGetSize(void);
 void motionOccur(void);
 void motionStateUpdate(motion_src_e src, motionState_e newState);
 
