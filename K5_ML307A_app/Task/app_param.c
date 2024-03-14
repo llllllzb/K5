@@ -99,8 +99,8 @@ void paramDefaultInit(uint8_t level)
     sysparam.sosalm = ALARM_TYPE_NONE;
     sysparam.ldrEn = 1;
     sysparam.tiltalm = 0;
-    sysparam.gsdettime=0;
-    sysparam.gsValidCnt=0;
+    sysparam.gsdettime=15;
+    sysparam.gsValidCnt=5;
     sysparam.gsInvalidCnt=0;
     sysparam.hiddenServOnoff = 0;
     sysparam.debug = 0;
@@ -124,15 +124,8 @@ void paramInit(void)
    	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
     {
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
-		sysparam.smsreply = 0;
-		sysparam.hiddenServOnoff = 0;
-		strcpy(sysparam.Server, "112.74.130.160");
-		sysparam.ServerPort = 7700;
-		sysparam.gpsuploadgap = 60;
-		sysparam.gapMinutes =0;
-		sysparam.batsel = 1;
-	    sysparam.gsdettime=0;
-	    sysparam.gsValidCnt=0;
+	    sysparam.gsdettime=15;
+	    sysparam.gsValidCnt=5;
 	    sysparam.gsInvalidCnt=0;
 		paramSaveAll();
     }

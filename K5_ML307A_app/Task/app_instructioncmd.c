@@ -1060,6 +1060,7 @@ static void doMotionDetInstruction(ITEM *item, char *message)
     }
     else
     {
+        portGsensorCtl(0);
         sysparam.gsdettime = atoi(item->item_data[1]);
         sysparam.gsValidCnt = atoi(item->item_data[2]);
         sysparam.gsInvalidCnt = atoi(item->item_data[3]);
@@ -1072,6 +1073,7 @@ static void doMotionDetInstruction(ITEM *item, char *message)
         sysparam.gsInvalidCnt = sysparam.gsInvalidCnt > sysparam.gsValidCnt ? sysparam.gsValidCnt : sysparam.gsInvalidCnt;
         paramSaveAll();
         sprintf(message, "Update motion param to %d,%d,%d", sysparam.gsdettime, sysparam.gsValidCnt, sysparam.gsInvalidCnt);
+        portGsensorCtl(1);
     }
 }
 
