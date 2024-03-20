@@ -1017,7 +1017,7 @@ static uint16_t motionCheckOut(uint8_t sec)
 void motionClear(void)
 {
 	LogMessage(DEBUG_ALL, "motionClear==>OK");
-	memset(motionInfo.tapCnt, 0, sizeof(motionInfo.tapCnt));
+	memset(&motionInfo, 0, sizeof(motionInfo_s));
 }
 
 /**************************************************
@@ -1059,6 +1059,11 @@ static void motionCheckTask(void)
 
     motionCalculate();
 
+	if (sysinfo.gsensorOnoff == 0)
+	{
+		motionState = 0;
+		return;
+	}
     if (sysparam.MODE == MODE21 || sysparam.MODE == MODE23)
     {
         staticTime = 180;
@@ -1317,7 +1322,7 @@ static void modeShutDownQuickly(void)
 {
     static uint16_t delaytick = 0;
     //存在一种情况是GPS在一开始就定位了，清除了wifi基站的标志位，而4G上线慢导致运行了30秒就关机了，因此要加上primaryServerIsReady判断
-    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiRequest == 0 && sysinfo.lbsRequest == 0 && primaryServerIsReady())
+    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiExtendEvt == 0 && sysinfo.lbsRequest == 0 && sysinfo.netRequest == 0 && primaryServerIsReady())
     {
     	//sysparam.gpsuploadgap>=60时，由于gpsrequest==0会关闭kernal,导致一些以1s为时基的任务不计时，会导致gps上报不及时，acc状态无法切换等
     	//比如运动的情况下，由于没有GPS_REQUEST_ACC_CTL，这里会导致关闭kernal
@@ -1400,6 +1405,8 @@ void modeTryToStop(void)
     sysinfo.alarmRequest = 0;
     sysinfo.wifiRequest = 0;
     sysinfo.lbsRequest = 0;
+    sysinfo.wifiExtendEvt = 0 ;
+    sysinfo.lbsExtendEvt = 0;
     netRequestClear();
     changeModeFsm(MODE_STOP);
     LogMessage(DEBUG_ALL, "modeTryToStop");
@@ -1418,6 +1425,8 @@ void modeTryToDone(void)
     sysinfo.alarmRequest = 0;
     sysinfo.wifiRequest = 0;
     sysinfo.lbsRequest = 0;
+    sysinfo.wifiExtendEvt = 0 ;
+    sysinfo.lbsExtendEvt = 0;
     netRequestClear();
     changeModeFsm(MODE_DONE);
     LogMessage(DEBUG_ALL, "modeTryToDone");
@@ -1750,11 +1759,7 @@ static void modeStart(void)
             break;
     }
     LogPrintf(DEBUG_ALL, "modeStart==>%02d/%02d/%02d %02d:%02d:%02d", year, month, date, hour, minute, second);
-    LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);
-//    lbsRequestSet(DEV_EXTEND_OF_MY);
-    wifiRequestSet(DEV_EXTEND_OF_MY);
-    gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-    
+    LogPrintf(DEBUG_ALL, "Mode:%d, startup:%d debug:%d %d", sysparam.MODE, dynamicParam.startUpCnt, sysparam.debug, dynamicParam.debug);  
     modulePowerOn();
     netResetCsqSearch();
     changeModeFsm(MODE_RUNING);
@@ -1877,7 +1882,8 @@ static void modeDone(void)
 		tick = 0;
 	}
 	bleTryInit();
-    if (sysinfo.gpsRequest)
+	//这个判断主要是判断gsensor产生的acc_gpsrequest
+    if (sysinfo.gpsRequest || sysinfo.netRequest)
     {
         motionTick = 0;
         volCheckRequestSet();
@@ -1910,7 +1916,6 @@ static void modeDone(void)
 				tmos_set_event(sysinfo.taskId, APP_TASK_STOP_EVENT);
 				motionTick = 0;
 			}
-
 		}
     }
 }
@@ -1971,6 +1976,8 @@ static void sysAutoReq(void)
             	volCheckRequestSet();
                 tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
             }
+            if (isModeDone())
+	            changeModeFsm(MODE_START);
         }
     }
     else if (sysparam.MODE == MODE4)
@@ -1999,14 +2006,58 @@ static void sysAutoReq(void)
                 {
                 	volCheckRequestSet();
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
-                    changeModeFsm(MODE_START);
                 }
+                changeModeFsm(MODE_START);
 			}
 		}
 		else
 		{
 			sysinfo.mode4NoNetTick = 0;
 		}
+    }
+    else if (sysparam.MODE == MODE23 || sysparam.MODE == MODE2)
+    {
+		if (sysparam.gapMinutes != 0)
+		{
+			sysinfo.staticUploadTick++;
+			if (sysinfo.staticUploadTick % sysparam.gapMinutes == 0)
+			{
+				sysinfo.staticUploadTick = 0;
+				LogMessage(DEBUG_ALL, "static upload period");
+	            if (sysinfo.kernalRun == 0)
+	            {
+	            	volCheckRequestSet();
+	            	if (sysparam.uploadSel)
+	            		netRequestSet();		//把这个写在kenalrun==0里面比较好，mode23如果是运动时，心跳包3分钟一次，不需要netrequest;如果是mode2时，会一直有心跳包也没必要netrequest
+	            	else
+	            		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+	                tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+	            }
+	            if (isModeDone())
+	            	changeModeFsm(MODE_START);
+            }
+    	}
+    	//模式2没网络逻辑
+    	if (isModeDone() && sysparam.MODE == MODE2)
+        {
+			noNetTick++;
+			LogPrintf(DEBUG_ALL, "mode2NoNetTick:%d", noNetTick);
+			if (noNetTick >= 60)
+			{
+				noNetTick = 0;
+				LogMessage(DEBUG_ALL, "mode 2 restoration network");
+                if (sysinfo.kernalRun == 0)
+                {
+                	volCheckRequestSet();
+                    tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
+                }
+	            changeModeFsm(MODE_START);
+			}
+        }
+        else
+        {
+			noNetTick = 0;
+        }
     }
     else
     {
@@ -2023,27 +2074,9 @@ static void sysAutoReq(void)
                 	volCheckRequestSet();
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
                 }
+	            if (isModeDone())
+	            	changeModeFsm(MODE_START);
             }
-        }
-        if (isModeDone() && sysparam.MODE == MODE2)
-        {
-			noNetTick++;
-			LogPrintf(DEBUG_ALL, "mode2NoNetTick:%d", noNetTick);
-			if (noNetTick >= 60)
-			{
-				noNetTick = 0;
-				LogMessage(DEBUG_ALL, "mode 2 restoration network");
-                if (sysinfo.kernalRun == 0)
-                {
-                	volCheckRequestSet();
-                    tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
-                    changeModeFsm(MODE_START);
-                }
-			}
-        }
-        else
-        {
-			noNetTick = 0;
         }
     }
 }
@@ -2262,10 +2295,10 @@ void wifiTimeout(void)
 
 void wifiRspSuccess(void)
 {
-	LogMessage(DEBUG_ALL, "wifiRspSuccess");
 	sysinfo.lockTick = 125;
 	if (wifiTimeOutId != -1)
 	{
+		LogMessage(DEBUG_ALL, "wifiRspSuccess");
 		stopTimer(wifiTimeOutId);
 		wifiTimeOutId = -1;
 	}
@@ -2645,7 +2678,6 @@ void taskRunInSecond(void)
     autoSleepTask();
     sysModeRunTask();
     serverManageTask();
-	
 }
 
 
@@ -2849,7 +2881,7 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
     	sysAutoReq();
     	calculateNormalTime();
         LogMessage(DEBUG_ALL, "***************************Task one minutes**********************");
-        LogPrintf(DEBUG_ALL,  "*Mode: %d, rungap: %d, System run: %d min, darktime: %d, oneminute: %d*", sysparam.MODE, sysparam.gapMinutes, sysinfo.sysMinutes, sysinfo.ldrDarkCnt, sysinfo.oneMinTick);
+        LogPrintf(DEBUG_ALL,  "*Mode: %d, rungap: %d, System run: %d %d min, darktime: %d, oneminute: %d*", sysparam.MODE, sysparam.gapMinutes, sysinfo.sysMinutes, sysinfo.staticUploadTick, sysinfo.ldrDarkCnt, sysinfo.oneMinTick);
         LogMessage(DEBUG_ALL, "*****************************************************************");
         portDebugUartCfg(0);
         return events ^ APP_TASK_ONEMINUTE_EVENT;

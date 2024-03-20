@@ -1019,7 +1019,6 @@ void portGsensorCtl(uint8_t onoff)
         PFIC_EnableIRQ(GPIO_B_IRQn);
 	    terminalAccoff();
         motionClear();
-        motionStateUpdate(SYS_SRC, MOTION_STATIC);
     }
     else
     {
@@ -1027,6 +1026,8 @@ void portGsensorCtl(uint8_t onoff)
         GSPWR_OFF;
         GPIOB_ModeCfg(GSINT_PIN, GPIO_ModeIN_PD);
         R16_PB_INT_EN &= ~GSINT_PIN;
+        terminalAccoff();
+        motionClear();
     }
     LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
 }

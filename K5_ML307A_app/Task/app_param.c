@@ -109,6 +109,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.mode4Alarm = 1200;
     sysparam.smsreply = 0;
     sysparam.bf = 0;
+    sysparam.uploadSel = 1;
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -124,9 +125,10 @@ void paramInit(void)
    	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
     {
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
-	    sysparam.gsdettime=15;
+	    sysparam.gsdettime=10;
 	    sysparam.gsValidCnt=5;
 	    sysparam.gsInvalidCnt=0;
+		sysparam.uploadSel = 1;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

@@ -96,8 +96,7 @@ typedef struct
 
 
 	uint8_t cm;
-//	uint8_t sosNum[3][20];
-//	uint8_t centerNum[20];
+
 	uint8_t sosalm;
 	uint8_t tiltalm;		/*作为Gsensor和倾斜检测的切换标志，1：倾斜版本， 0：Gsensor版本*/
 	uint8_t leavealm;
@@ -113,6 +112,8 @@ typedef struct
 	uint8_t smsreply;
 	uint8_t bf;
 	uint8_t batsel;
+
+	uint8_t uploadSel;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

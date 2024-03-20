@@ -1166,6 +1166,7 @@ static void protoclparase13(uint8_t link, char *protocol, int size)
     if (link == NORMAL_LINK)
     {
         hbtRspSuccess();
+        netRequestClear();
     }
 }
 

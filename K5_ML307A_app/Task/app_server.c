@@ -307,7 +307,7 @@ void privateServerConnTask(void)
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
                                     dynamicParam.startUpCnt, dynamicParam.runTime);
                 protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
-                netRequestClear();
+                
             }
             privateServConn.heartbeattick++;
             if (getTcpNack())
