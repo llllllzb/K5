@@ -251,7 +251,7 @@ void privateServerConnTask(void)
     {
         ledStatusUpdate(SYSTEM_LED_NETOK, 0);
         privateServerChangeFsm(SERV_LOGIN);
-        if (unLoginTick++ >= 900)
+        if (unLoginTick++ >= 600)
         {
             unLoginTick = 0;
             moduleReset();
@@ -286,7 +286,6 @@ void privateServerConnTask(void)
                 if (privateServConn.loginCount >= 3)
                 {
                     privateServConn.loginCount = 0;
-                    moduleReset();
                 }
             }
             break;

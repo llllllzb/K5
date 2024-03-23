@@ -126,15 +126,14 @@ void paramInit(void)
    	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
     {
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
-		sysparam.smsreply = 0;
-		sysparam.hiddenServOnoff = 0;
-		strcpy(sysparam.Server, "39.105.31.47");
-		sysparam.ServerPort = 7700;
-		sysparam.gpsuploadgap = 30;
-		sysparam.gapMinutes = 0;
-		sysparam.angleTurnThrd = 15;
-		sysparam.mode4GapMinutes = 1440;
-		sysparam.mode4noNetWakeUpMinutes = 60;
+		if (strncmp(dynamicParam.SN, sysparam.SN, 15) != 0 && 
+			strncmp(dynamicParam.SN, "888888887777777", 15) != 0 &&
+			strlen(dynamicParam.SN) == 15)
+		{
+			strncpy(sysparam.SN, dynamicParam.SN, 15);
+		    sysparam.SN[15] = 0;
+		    LogPrintf(DEBUG_ALL, "Bak SN:%s", sysparam.SN);
+	    }
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

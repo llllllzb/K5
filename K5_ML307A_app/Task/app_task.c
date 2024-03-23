@@ -2411,6 +2411,15 @@ static void rebootEveryDay(void)
     //    if (sysinfo.gpsRequest != 0)
     //        return ;
     //    portSysReset();
+    if (strncmp(dynamicParam.SN, sysparam.SN, 15) != 0 && 
+    	strncmp(sysparam.SN, "888888887777777", 15) != 0 &&
+    	strlen(sysparam.SN) == 15)
+    {
+		strncpy(dynamicParam.SN, sysparam.SN, 15);
+	    dynamicParam.SN[15] = 0;
+	    LogPrintf(DEBUG_ALL, "Restore SN:%s", dynamicParam.SN);
+	    dynamicParamSaveAll();
+    }
 }
 
 static void tiltDetectionTask(void)
@@ -2683,7 +2692,7 @@ void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
     paramInit();
-    //sysinfo.logLevel = 9;
+    sysinfo.logLevel = 9;
     SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portModuleGpioCfg(1);
