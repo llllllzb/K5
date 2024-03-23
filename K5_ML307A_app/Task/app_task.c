@@ -2797,7 +2797,8 @@ void myTaskPreInit(void)
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
-
+    if (sysparam.bf)
+        terminalDefense();
     sysinfo.sysTaskId = createSystemTask(taskRunInSecond, 10);
 	LogMessage(DEBUG_ALL, ">>>>>>>>>>>>>>>>>>>>>");
     LogPrintf(DEBUG_ALL, "SYS_GetLastResetSta:%x", SYS_GetLastResetSta());
