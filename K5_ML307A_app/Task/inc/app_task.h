@@ -2,6 +2,7 @@
 #define APP_TASK
 #include <stdint.h>
 #include "app_central.h"
+#include "app_gps.h"
 #define SYSTEM_LED_RUN					0X01
 #define SYSTEM_LED_NETOK				0X02
 #define SYSTEM_LED_GPSOK				0X04	//普通GPS
@@ -107,6 +108,12 @@ typedef struct
 	uint8_t fsmStep;
 	uint8_t tick;
 }AccuracyStruct;
+
+typedef struct
+{
+	uint8_t   init;		//表示基准点已生成
+	gpsinfo_s gpsinfo;
+}centralPoint_s;
 
 typedef enum
 {

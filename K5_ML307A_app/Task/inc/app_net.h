@@ -233,6 +233,7 @@ void sendMessage(uint8_t *buf, uint16_t len, char *telnum);
 void deleteAllMessage(void);
 void deleteMessage(uint8_t index);
 void queryMessageList(void);
+void updateNoNetTime(void);
 
 void querySendData(uint8_t link);
 void queryBatVoltage(void);
@@ -261,6 +262,7 @@ uint8_t isModulePowerOff(void);
 
 void stopCall(void);
 void callPhone(char *tel);
+void noNetTimeInit(void);
 
 
 void mwifiscaninfoParser(uint8_t *buf, uint16_t len);

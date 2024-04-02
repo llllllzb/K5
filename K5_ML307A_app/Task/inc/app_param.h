@@ -22,7 +22,7 @@
 #define BOOT_PARAM_FLAG         0xB0
 #define OTA_PARAM_FLAG          0x21
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.3.9"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.4.0"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -113,7 +113,6 @@ typedef struct
 	uint8_t bf;
 	uint8_t batsel;
 
-	uint8_t uploadSel;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

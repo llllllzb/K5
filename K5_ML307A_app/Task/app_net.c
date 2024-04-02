@@ -644,6 +644,32 @@ void netRequestClear(void)
 }
 
 /**************************************************
+@bref		初始化重新搜网时间
+@param
+@return
+@note	刚上电的时候用
+**************************************************/
+
+void noNetTimeInit(void)
+{
+	sysinfo.noNetTime = 1;
+}
+
+/**************************************************
+@bref		更新重新搜网时间
+@param
+@return
+@note
+**************************************************/
+
+void updateNoNetTime(void)
+{
+	sysinfo.noNetTime += 2;
+	sysinfo.noNetTime = sysinfo.noNetTime > 5 ? 1 : sysinfo.noNetTime;
+	LogPrintf(DEBUG_ALL, "%s==>check net gap:%d", __FUNCTION__, sysinfo.noNetTime);
+}
+
+/**************************************************
 @bref		联网准备任务
 @param
 @return

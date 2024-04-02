@@ -23,6 +23,7 @@ static SystemLEDInfo sysledinfo;
 motionInfo_s motionInfo;
 static bleScanTry_s bleTry;
 static int8_t wifiTimeOutId = -1;
+static centralPoint_s centralPoi;
 
 /**************************************************
 @bref		bit0 置位，布防
@@ -635,6 +636,34 @@ static void gpsRequestTask(void)
 
 }
 
+/**************************************************
+@bref		生成最后一次定位点
+@param
+@return
+@note
+**************************************************/
+
+void centralPointInit(gpsinfo_s *gpsinfo)
+{
+	centralPoi.init = 1;
+	tmos_memcpy(&centralPoi.gpsinfo, gpsinfo, sizeof(gpsinfo_s));
+	LogPrintf(DEBUG_ALL, "%s==>lat:%.2f, lon:%.2f", __FUNCTION__,
+				centralPoi.gpsinfo.latitude, centralPoi.gpsinfo.longtitude);
+}
+
+/**************************************************
+@bref		清除最后一次定位点
+@param
+@return
+@note
+**************************************************/
+
+void centralPointClear(void)
+{
+	centralPoi.init = 0;
+	tmos_memset(&centralPoi.gpsinfo, 0, sizeof(gpsinfo_s));
+	LogPrintf(DEBUG_ALL, "%s==>OK", __FUNCTION__);
+}
 
 
 /**************************************************
@@ -648,14 +677,17 @@ static void gpsUplodOnePointTask(void)
 {
     gpsinfo_s *gpsinfo;
     static uint16_t runtick = 0;
-    static uint8_t uploadtick = 0;
-    uint8_t total, i;
+    static uint8_t  uploadtick = 0;
     //判断是否有请求该事件
     if (sysinfo.gpsOnoff == 0)
+    {
+    	runtick    = 0;
+    	uploadtick = 0;
         return;
+    }
     if (gpsRequestGet(GPS_REQUEST_UPLOAD_ONE) == 0)
     {
-        runtick = 0;
+        runtick    = 0;
         uploadtick = 0;
         return;
     }
@@ -668,7 +700,6 @@ static void gpsUplodOnePointTask(void)
         {
             runtick = 0;
             uploadtick = 0;
-            LogPrintf(DEBUG_ALL, "gps fix time out");
             gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
             if (getTerminalAccState() == 0)
             {
@@ -678,43 +709,92 @@ static void gpsUplodOnePointTask(void)
         return;
     }
     runtick = 0;
-    ++uploadtick;
-    for (i = 0; i < sizeof(gpsinfo->gpsCn); i++)
-    {
-        if (gpsinfo->gpsCn[i] >= 40)
-            total++;
-    }
-    for (i = 0; i < sizeof(gpsinfo->beidouCn); i++)
-    {
-        if (gpsinfo->beidouCn[i] >= 40)
-            total++;
-    }
-    if ((gpsinfo->used_star >= 10 && gpsinfo->pdop < 3.30) ||
-        (gpsinfo->used_star >= 8 && total >= 10) ||
-        (gpsinfo->used_star >= 10 && total >= 8) ||
-         gpsinfo->used_star >= 13 ||
-         gpsinfo->pdop <= 1.90)
-    {
-		uploadtick = 0;
-        if (sysinfo.flag123)
+    uploadtick++;
+    LogPrintf(DEBUG_ALL, "uploadtick:%d", uploadtick);
+	if (uploadtick >= 10)
+	{
+		if (sysinfo.flag123)
         {
             dorequestSend123();
         }
-        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
-        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
-        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+		protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
+	    jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
+	    gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+	    if (getTerminalAccState() == 0 && centralPoi.init == 0)
+	    {
+			centralPointInit(getCurrentGPSInfo());
+	    }
     }
-    else if (uploadtick >= 10)
-    {
-		uploadtick = 0;
-        if (sysinfo.flag123)
-        {
-            dorequestSend123();
-        }
-        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
-        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
-        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
-    }
+
+//    gpsinfo_s *gpsinfo;
+//    static uint16_t runtick = 0;
+//    static uint8_t uploadtick = 0;
+//    uint8_t total, i;
+//    //判断是否有请求该事件
+//    if (sysinfo.gpsOnoff == 0)
+//        return;
+//    if (gpsRequestGet(GPS_REQUEST_UPLOAD_ONE) == 0)
+//    {
+//        runtick = 0;
+//        uploadtick = 0;
+//        return;
+//    }
+//    gpsinfo = getCurrentGPSInfo();
+//    runtick++;
+//    if (gpsinfo->fixstatus == 0)
+//    {
+//        uploadtick = 0;
+//        if (runtick >= sysinfo.gpsuploadonepositiontime)
+//        {
+//            runtick = 0;
+//            uploadtick = 0;
+//            LogPrintf(DEBUG_ALL, "gps fix time out");
+//            gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+//            if (getTerminalAccState() == 0)
+//            {
+//            	wifiRequestSet(DEV_EXTEND_OF_MY);
+//            }
+//        }
+//        return;
+//    }
+//    runtick = 0;
+//    ++uploadtick;
+//    for (i = 0; i < sizeof(gpsinfo->gpsCn); i++)
+//    {
+//        if (gpsinfo->gpsCn[i] >= 40)
+//            total++;
+//    }
+//    for (i = 0; i < sizeof(gpsinfo->beidouCn); i++)
+//    {
+//        if (gpsinfo->beidouCn[i] >= 40)
+//            total++;
+//    }
+//    if ((gpsinfo->used_star >= 10 && gpsinfo->pdop < 3.30) ||
+//        (gpsinfo->used_star >= 8 && total >= 10) ||
+//        (gpsinfo->used_star >= 10 && total >= 8) ||
+//         gpsinfo->used_star >= 13 ||
+//         gpsinfo->pdop <= 1.90)
+//    {
+//		uploadtick = 0;
+//        if (sysinfo.flag123)
+//        {
+//            dorequestSend123();
+//        }
+//        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
+//        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
+//        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+//    }
+//    else if (uploadtick >= 10)
+//    {
+//		uploadtick = 0;
+//        if (sysinfo.flag123)
+//        {
+//            dorequestSend123();
+//        }
+//        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
+//        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
+//        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
+//    }
 
 
 }
@@ -915,6 +995,7 @@ void motionStateUpdate(motion_src_e src, motionState_e newState)
         }
         terminalAccon();
         hiddenServerCloseClear();
+        centralPointClear();
     }
     else
     {
@@ -1887,14 +1968,7 @@ static void modeDone(void)
     {
         motionTick = 0;
         volCheckRequestSet();
-        if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3)
-        {
-            changeModeFsm(MODE_CHOOSE);
-        }
-        else
-        {
-            changeModeFsm(MODE_START);
-        }
+        changeModeFsm(MODE_START);
         LogMessage(DEBUG_ALL, "modeDone==>Change to mode start");
     }
     else if (sysparam.MODE == MODE1 || sysparam.MODE == MODE3 || sysparam.MODE == MODE4)
@@ -2027,10 +2101,18 @@ static void sysAutoReq(void)
 	            if (sysinfo.kernalRun == 0)
 	            {
 	            	volCheckRequestSet();
-	            	if (sysparam.uploadSel)
-	            		netRequestSet();		//把这个写在kenalrun==0里面比较好，mode23如果是运动时，心跳包3分钟一次，不需要netrequest;如果是mode2时，会一直有心跳包也没必要netrequest
-	            	else
+					if (getTerminalAccState() == 0 && centralPoi.init)
+					{
+						gpsinfo_s newgps;
+						tmos_memcpy(&newgps, &centralPoi.gpsinfo, sizeof(gpsinfo_s));
+						updateHistoryGpsTime(&newgps);
+						protocolSend(NORMAL_LINK, PROTOCOL_12, &newgps);
+						jt808SendToServer(TERMINAL_POSITION,   &newgps);
+					}
+					else
+					{
 	            		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+	            	}
 	                tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
 	            }
 	            if (isModeDone())
@@ -2041,8 +2123,8 @@ static void sysAutoReq(void)
     	if (isModeDone() && sysparam.MODE == MODE2)
         {
 			noNetTick++;
-			LogPrintf(DEBUG_ALL, "mode2NoNetTick:%d", noNetTick);
-			if (noNetTick >= 60)
+			LogPrintf(DEBUG_ALL, "mode2NoNetTick:%d  check net gap:%d", noNetTick, sysinfo.noNetTime * 60);
+			if (noNetTick >= sysinfo.noNetTime * 60)
 			{
 				noNetTick = 0;
 				LogMessage(DEBUG_ALL, "mode 2 restoration network");
@@ -2052,6 +2134,7 @@ static void sysAutoReq(void)
                     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
                 }
 	            changeModeFsm(MODE_START);
+	            updateNoNetTime();
 			}
         }
         else
@@ -2793,7 +2876,7 @@ void myTaskPreInit(void)
     socketListInit();
     portSleepEn();
 	ledStatusUpdate(SYSTEM_LED_RUN, 1);
-
+	noNetTimeInit();
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);

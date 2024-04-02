@@ -53,7 +53,6 @@ const instruction_s insCmdTable[] =
     {ADCCAL_INS, "ADCCAL"},
     {BATSEL_INS, "BATSEL"},
     {MOTIONDET_INS, "MOTIONDET"},
-    {UPLOADSEL_INS, "UPLOADSEL"},
 };
 
 static insMode_e mode123;
@@ -1474,35 +1473,6 @@ void doBatSelInstruction(ITEM *item, char *message)
 	}
 }
 
-void doUploadSelInstruction(ITEM *item, char *message)
-{
-	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
-	{
-		sprintf(message, "Upload sel is %s", sysparam.uploadSel ? "HEARTBEAT" : "GPS");
-	}
-	else
-	{
-		strToUppper(item->item_data[1], strlen(item->item_data[1]));
-		if (my_strstr(item->item_data[1], "HEARTBEAT", strlen(item->item_data[1])) ||
-			item->item_data[1][0] == 'H' || item->item_data[1][0] == '1')
-		{
-			sysparam.uploadSel = 1;
-		}
-		else if (my_strstr(item->item_data[1], "GPS", strlen(item->item_data[1])) ||
-			item->item_data[1][0] == 'G' || item->item_data[1][0] == '0')
-		{
-			sysparam.uploadSel = 0;
-		}
-		else
-		{
-			strcpy(message, "Please enter true param");
-			return;
-		}
-		sprintf(message, "Update upload sel to %s", sysparam.uploadSel ? "HEARTBEAT" : "GPS");
-		paramSaveAll();
-	}
-}
-
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1630,9 +1600,6 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case MOTIONDET_INS:
 			doMotionDetInstruction(item, message);
-        	break;
-        case UPLOADSEL_INS:
-			doUploadSelInstruction(item, message);
         	break;
         default:
             if (mode == SMS_MODE)
