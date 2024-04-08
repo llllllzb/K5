@@ -47,15 +47,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  14 .debug_ranges 000028f8  00000000  00000000  00086318  2**3
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_line   0002ccb2  00000000  00000000  00088c10  2**0
+ 15 .debug_line   0002ccb0  00000000  00000000  00088c10  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_str    00007684  00000000  00000000  000b58c2  2**0
+ 16 .debug_str    00007684  00000000  00000000  000b58c0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .comment      00000033  00000000  00000000  000bcf46  2**0
+ 17 .comment      00000033  00000000  00000000  000bcf44  2**0
                   CONTENTS, READONLY
- 18 .debug_frame  00005c78  00000000  00000000  000bcf7c  2**2
+ 18 .debug_frame  00005c78  00000000  00000000  000bcf78  2**2
                   CONTENTS, READONLY, DEBUGGING
- 19 .stabstr      00000117  00000000  00000000  000c2bf4  2**0
+ 19 .stabstr      00000117  00000000  00000000  000c2bf0  2**0
                   CONTENTS, READONLY, DEBUGGING
 SYMBOL TABLE:
 0000c000 l    d  .init	00000000 .init
@@ -24539,33 +24539,33 @@ Disassembly of section .text:
    1ce12:	933fd0ef          	jal	ra,1a744 <LogMessage>
    1ce16:	00045783          	lhu	a5,0(s0)
    1ce1a:	01479713          	slli	a4,a5,0x14
-   1ce1e:	04074b63          	bltz	a4,1ce74 <myTaskEventProcess+0x482>
+   1ce1e:	00074b63          	bltz	a4,1ce34 <myTaskEventProcess+0x442>
    1ce22:	babfe0ef          	jal	ra,1b9cc <volCheckRequestSet>
-   1ce26:	00b44783          	lbu	a5,11(s0)
-   1ce2a:	8b89                	andi	a5,a5,2
-   1ce2c:	ebb9                	bnez	a5,1ce82 <myTaskEventProcess+0x490>
-   1ce2e:	1ffe7797          	auipc	a5,0x1ffe7
-   1ce32:	8d27c783          	lbu	a5,-1838(a5) # 20003700 <centralPoi>
-   1ce36:	c7b1                	beqz	a5,1ce82 <myTaskEventProcess+0x490>
-   1ce38:	07800613          	li	a2,120
-   1ce3c:	1ffe7597          	auipc	a1,0x1ffe7
-   1ce40:	8cc58593          	addi	a1,a1,-1844 # 20003708 <centralPoi+0x8>
-   1ce44:	0028                	addi	a0,sp,8
-   1ce46:	1ffe4097          	auipc	ra,0x1ffe4
-   1ce4a:	152080e7          	jalr	338(ra) # 20000f98 <tmos_memcpy>
-   1ce4e:	0028                	addi	a0,sp,8
-   1ce50:	c1dfb0ef          	jal	ra,18a6c <updateHistoryGpsTime>
-   1ce54:	4585                	li	a1,1
-   1ce56:	4501                	li	a0,0
-   1ce58:	0030                	addi	a2,sp,8
-   1ce5a:	a10fc0ef          	jal	ra,1906a <protocolSend>
-   1ce5e:	002c                	addi	a1,sp,8
-   1ce60:	450d                	li	a0,3
-   1ce62:	fe8f60ef          	jal	ra,1364a <jt808SendToServer>
-   1ce66:	4591                	li	a1,4
-   1ce68:	1ffe8517          	auipc	a0,0x1ffe8
-   1ce6c:	cae54503          	lbu	a0,-850(a0) # 20004b16 <sysinfo+0x22>
-   1ce70:	62c040ef          	jal	ra,2149c <tmos_set_event>
+   1ce26:	4591                	li	a1,4
+   1ce28:	1ffe8517          	auipc	a0,0x1ffe8
+   1ce2c:	cee54503          	lbu	a0,-786(a0) # 20004b16 <sysinfo+0x22>
+   1ce30:	66c040ef          	jal	ra,2149c <tmos_set_event>
+   1ce34:	00b44783          	lbu	a5,11(s0)
+   1ce38:	8b89                	andi	a5,a5,2
+   1ce3a:	e7a1                	bnez	a5,1ce82 <myTaskEventProcess+0x490>
+   1ce3c:	1ffe7797          	auipc	a5,0x1ffe7
+   1ce40:	8c47c783          	lbu	a5,-1852(a5) # 20003700 <centralPoi>
+   1ce44:	cf9d                	beqz	a5,1ce82 <myTaskEventProcess+0x490>
+   1ce46:	07800613          	li	a2,120
+   1ce4a:	1ffe7597          	auipc	a1,0x1ffe7
+   1ce4e:	8be58593          	addi	a1,a1,-1858 # 20003708 <centralPoi+0x8>
+   1ce52:	0028                	addi	a0,sp,8
+   1ce54:	1ffe4097          	auipc	ra,0x1ffe4
+   1ce58:	144080e7          	jalr	324(ra) # 20000f98 <tmos_memcpy>
+   1ce5c:	0028                	addi	a0,sp,8
+   1ce5e:	c0ffb0ef          	jal	ra,18a6c <updateHistoryGpsTime>
+   1ce62:	4585                	li	a1,1
+   1ce64:	4501                	li	a0,0
+   1ce66:	0030                	addi	a2,sp,8
+   1ce68:	a02fc0ef          	jal	ra,1906a <protocolSend>
+   1ce6c:	002c                	addi	a1,sp,8
+   1ce6e:	450d                	li	a0,3
+   1ce70:	fdaf60ef          	jal	ra,1364a <jt808SendToServer>
    1ce74:	b49fe0ef          	jal	ra,1b9bc <isModeDone>
    1ce78:	c909                	beqz	a0,1ce8a <myTaskEventProcess+0x498>
    1ce7a:	4505                	li	a0,1
@@ -24573,7 +24573,7 @@ Disassembly of section .text:
    1ce80:	b5fd                	j	1cd6e <myTaskEventProcess+0x37c>
    1ce82:	4505                	li	a0,1
    1ce84:	cc2fe0ef          	jal	ra,1b346 <gpsRequestSet>
-   1ce88:	bff9                	j	1ce66 <myTaskEventProcess+0x474>
+   1ce88:	b7f5                	j	1ce74 <myTaskEventProcess+0x482>
    1ce8a:	88019623          	sh	zero,-1908(gp) # 200023dc <noNetTick.7268>
    1ce8e:	b3ad                	j	1cbf8 <myTaskEventProcess+0x206>
    1ce90:	d60784e3          	beqz	a5,1cbf8 <myTaskEventProcess+0x206>
@@ -45735,7 +45735,7 @@ Disassembly of section .text:
    2b748:	fffe388c fffe376c fffe37c0 fffe37d8     .8..l7...7...7..
    2b758:	fffe381e fffe3840 fffe3858 fffe3870     .8..@8..X8..p8..
    2b768:	4d5f354b 3730334c 44485f41 2e32565f     K5_ML307A_HD_V2.
-   2b778:	00302e34 4e49545a 253a4f46 73253a73     4.0.ZTINFO:%s:%s
+   2b778:	00312e34 4e49545a 253a4f46 73253a73     4.1.ZTINFO:%s:%s
    2b788:	0073253a 40800000 50535553 00444e45     :%s....@SUSPEND.
    2b798:	70737553 20646e65 206c6c61 6b736174     Suspend all task
    2b7a8:	00000000 55534552 0000454d 75736552     ....RESUME..Resu
@@ -46060,8 +46060,8 @@ Disassembly of section .text:
    2cb4c:	3d535047 736f6c43 00003b65 3d434341     GPS=Close;..ACC=
    2cb5c:	003b7325 4e474953 253d4c41 00003b64     %s;.SIGNAL=%d;..
    2cb6c:	54544142 3d595245 003b7325 49474f4c     BATTERY=%s;.LOGI
-   2cb7c:	73253d4e 0000003b 303a3131 37353a38     N=%s;...11:08:57
-   2cb8c:	00000000 20727041 32203120 00343230     ....Apr  1 2024.
+   2cb7c:	73253d4e 0000003b 323a3431 36333a38     N=%s;...14:28:36
+   2cb8c:	00000000 20727041 32203320 00343230     ....Apr  3 2024.
    2cb9c:	73726556 3a6e6f69 433b7325 69706d6f     Version:%s;Compi
    2cbac:	253a656c 73252073 0000003b 61647055     le:%s %s;...Upda
    2cbbc:	6a206574 38303874 6d6f6420 206e6961     te jt808 domain 

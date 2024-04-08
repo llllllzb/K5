@@ -2101,20 +2101,20 @@ static void sysAutoReq(void)
 	            if (sysinfo.kernalRun == 0)
 	            {
 	            	volCheckRequestSet();
-					if (getTerminalAccState() == 0 && centralPoi.init)
-					{
-						gpsinfo_s newgps;
-						tmos_memcpy(&newgps, &centralPoi.gpsinfo, sizeof(gpsinfo_s));
-						updateHistoryGpsTime(&newgps);
-						protocolSend(NORMAL_LINK, PROTOCOL_12, &newgps);
-						jt808SendToServer(TERMINAL_POSITION,   &newgps);
-					}
-					else
-					{
-	            		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-	            	}
 	                tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
 	            }
+	            if (getTerminalAccState() == 0 && centralPoi.init)
+				{
+					gpsinfo_s newgps;
+					tmos_memcpy(&newgps, &centralPoi.gpsinfo, sizeof(gpsinfo_s));
+					updateHistoryGpsTime(&newgps);
+					protocolSend(NORMAL_LINK, PROTOCOL_12, &newgps);
+					jt808SendToServer(TERMINAL_POSITION,   &newgps);
+				}
+				else
+				{
+            		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+            	}
 	            if (isModeDone())
 	            	changeModeFsm(MODE_START);
             }
