@@ -2692,7 +2692,7 @@ void myTaskPreInit(void)
 {
     tmos_memset(&sysinfo, 0, sizeof(sysinfo));
     paramInit();
-    sysinfo.logLevel = 9;
+    //sysinfo.logLevel = 9;
     SetSysClock(CLK_SOURCE_HSE_16MHz);
     portGpioSetDefCfg();
     portModuleGpioCfg(1);
