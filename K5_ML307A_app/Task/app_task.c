@@ -709,9 +709,7 @@ static void gpsUplodOnePointTask(void)
         return;
     }
     runtick = 0;
-    uploadtick++;
-    LogPrintf(DEBUG_ALL, "uploadtick:%d", uploadtick);
-	if (uploadtick >= 10)
+	if (++uploadtick >= 10)
 	{
 		if (sysinfo.flag123)
         {

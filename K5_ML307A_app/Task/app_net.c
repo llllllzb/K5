@@ -111,14 +111,14 @@ uint8_t createNode(char *data, uint16_t datalen, uint8_t currentcmd)
     cmdNode_s *currentnode;
     //如果链表头未创建，则创建链表头。
     WAKEMODULE;
-//    if (currentcmd == MWIFISCANSTART_CMD)
-//    {
-//		wakeUpByInt(1, 28);
-//    }
-//    else
-//    {
+    if (currentcmd == MWIFISCANSTART_CMD)
+    {
+		wakeUpByInt(1, 28);
+    }
+    else
+    {
 		wakeUpByInt(1, 8);
-//    }
+    }
     if (headNode == NULL)
     {
         headNode = malloc(sizeof(cmdNode_s));
@@ -247,7 +247,7 @@ void outputNode(void)
             }
             else if (currentnode->currentcmd == MWIFISCANSTART_CMD)
             {
-				tickRange = 10;
+				tickRange = 125;
             }
             else
             {
@@ -988,7 +988,6 @@ static void cgregParser(uint8_t *buf, uint16_t len)
                         case 4:
                             moduleState.cid = strtoul(restore + 1, NULL, 16);
                             LogPrintf(DEBUG_ALL, "CID=%s,0x%X", restore, moduleState.cid);
-                            sendModuleCmd(CEREG_CMD, "0");
                             break;
                     }
                     restore[0] = 0;
@@ -2392,7 +2391,7 @@ void moduleGetCsq(void)
 
 void moduleGetLbs(void)
 {
-    sendModuleCmd(CEREG_CMD, "2");
+    sendModuleCmd(CGREG_CMD, "?");
     sendModuleCmd(CEREG_CMD, "?");
 }
 /**************************************************
