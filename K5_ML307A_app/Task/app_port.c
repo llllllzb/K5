@@ -1017,8 +1017,7 @@ void portGsensorCtl(uint8_t onoff)
 	        GPIOB_SetBits(GSINT_PIN);
 	    }
         PFIC_EnableIRQ(GPIO_B_IRQn);
-	    terminalAccoff();
-        motionClear();
+
     }
     else
     {
@@ -1028,6 +1027,7 @@ void portGsensorCtl(uint8_t onoff)
         R16_PB_INT_EN &= ~GSINT_PIN;
         terminalAccoff();
         motionClear();
+        gpsRequestClear(GPS_REQUEST_ACC_CTL); //
     }
     LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
 }

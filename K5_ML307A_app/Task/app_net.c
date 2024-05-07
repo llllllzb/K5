@@ -218,7 +218,15 @@ void outputNode(void)
         }
         else
         {
-            SLEEPMODULE;
+        	/* 模组关机状态DTR脚置低,模组关机的时候最好不要阻止这里发完AT指令,不然会一直占着堆空间 */
+        	if (isModulePowerOff())
+        	{
+            	WAKEMODULE;
+            }
+            else 
+            {
+				SLEEPMODULE;
+            }
         }
         return ;
     }
@@ -459,6 +467,7 @@ void moduleReset(void)
 {
     LogMessage(DEBUG_ALL, "moduleReset");
     moduleInit();
+    portUartCfg(APPUSART0, 0, 57600, NULL);
     PWRKEY_HIGH;
     RSTKEY_HIGH;
     POWER_OFF;

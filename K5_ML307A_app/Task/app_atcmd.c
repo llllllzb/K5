@@ -147,9 +147,13 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     {
 		PORT_RSTKEY_L;
     }
-    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"WIFI"))
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"MUH"))
     {
-		mwifiscaninfoParser(buf, len);
+		portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
+    }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"MUL"))
+    {
+		portUartCfg(APPUSART0, 0, 57600, NULL);
     }
     else
     {
