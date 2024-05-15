@@ -1187,6 +1187,7 @@ static void jt808GenericResponParser(uint8_t *msg, uint16_t len)
     result = msg[4];
     LogMessage(DEBUG_ALL, "Generic Respon");
 	hbtRspSuccess();
+	netRequestClear();
     switch (protocol)
     {
         case TERMINAL_AUTHENTICATION_MSGID:

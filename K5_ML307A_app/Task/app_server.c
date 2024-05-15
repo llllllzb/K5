@@ -66,11 +66,8 @@ void hbtRspSuccess(void)
 static void moduleRspTimeout(void)
 {
     timeOutId = -1;
-    if (sysinfo.runFsm == MODE_RUNING)
-    {
-    	moduleReset();
-		LogMessage(DEBUG_ALL, "moduleRspTimeout");
-    }
+    LogMessage(DEBUG_ALL, "moduleRspTimeout");
+    moduleReset();
 }
 
 static void hbtRspTimeOut(void)
@@ -219,6 +216,7 @@ static void privateServerSocketRecv(char *data, uint16_t len)
         }
     }
 }
+
 /**************************************************
 @bref		主服务器连接任务
 @param
@@ -286,6 +284,7 @@ void privateServerConnTask(void)
                 if (privateServConn.loginCount >= 3)
                 {
                     privateServConn.loginCount = 0;
+                    //moduleReset();
                 }
             }
             break;
@@ -309,7 +308,7 @@ void privateServerConnTask(void)
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
                                     dynamicParam.startUpCnt, dynamicParam.runTime);
                 protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
-                netRequestClear();
+                
             }
             privateServConn.heartbeattick++;
             if (getTcpNack())
@@ -892,6 +891,7 @@ void bleServerConnTask(void)
                 protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage, bleHead->startCnt, 0);
                 protocolSend(BLE_LINK, PROTOCOL_13, NULL);
                 lbsRequestSet(DEV_EXTEND_OF_BLE);
+                
             }
             gpsinfo = getCurrentGPSInfo();
 

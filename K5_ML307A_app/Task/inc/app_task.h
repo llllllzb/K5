@@ -2,6 +2,7 @@
 #define APP_TASK
 #include <stdint.h>
 #include "app_central.h"
+#include "app_gps.h"
 #define SYSTEM_LED_RUN					0X01
 #define SYSTEM_LED_NETOK				0X02
 #define SYSTEM_LED_GPSOK				0X04	//普通GPS
@@ -17,6 +18,12 @@
 #define GPS_REQUEST_DEBUG				0X00000010
 
 #define GPS_REQUEST_ALL					0xFFFFFFFF
+
+#define MODULE_REQUEST_NONE				0
+#define MODULE_REQUEST_CLOSE			1
+#define MODULE_REQUEST_OPEN				2
+#define MODULE_REQUEST_RESET			3
+#define MODULE_REQUESR_SHUTDOWN_OPEN    4 //如果多次使用reset脚都无法重启，则关闭电源20s后再次开机
 
 
 #define ALARM_LIGHT_REQUEST				0x0001 //感光
@@ -49,14 +56,13 @@
 #define APP_TASK_STOP_EVENT				0x0008
 #define APP_TASK_ONEMINUTE_EVENT		0x0010
 
-#define UART_RECV_BUFF_SIZE 			968
+#define UART_RECV_BUFF_SIZE 			768
 #define DEBUG_BUFF_SIZE					256
 
-#define MODE_CHOOSE						0
-#define MODE_START						1
-#define MODE_RUNING						2
-#define MODE_STOP						3
-#define MODE_DONE						4
+#define MODE_START						0
+#define MODE_RUNING						1
+#define MODE_STOP						2
+#define MODE_DONE						3
 
 //GPS_UPLOAD_GAP_MAX 以下，gps常开，以上(包含GPS_UPLOAD_GAP_MAX),周期开启
 #define GPS_UPLOAD_GAP_MAX				60
@@ -101,12 +107,33 @@ typedef enum{
 
 }GPSREQUESTFSMSTATUS;
 
+typedef enum
+{
+	MODULE_FSM_CLOSE_DONE,
+	MODULE_FSM_OPEN_ING1,
+	MODULE_FSM_OPEN_ING2,
+	MODULE_FSM_OPEN_ING3,
+	MODULE_FSM_OPEN_DONE,
+	MODULE_FSM_CLOSE_ING,
+	MODULE_FSM_RESET_ING1,
+	MODULE_FSM_RESET_ING2,
+	MODULE_FSM_SHUTDOWN_ING,
+	MODULE_FSM_SHUTDOWN_WAIT,
+	MODULE_FSM_SHUTDOWN_UP,
+}module_fsm_e;
+
 typedef struct
 {
 	uint8_t initok;
 	uint8_t fsmStep;
 	uint8_t tick;
 }AccuracyStruct;
+
+typedef struct
+{
+	uint8_t   init;		//表示基准点已生成
+	gpsinfo_s gpsinfo;
+}centralPoint_s;
 
 typedef enum
 {
@@ -195,8 +222,9 @@ void alarmRequestClear(uint16_t request);
 
 void lbsRequestSet(uint8_t ext);
 void wifiRequestSet(uint8_t ext);
-
+uint8_t motionGetSize(void);
 void motionOccur(void);
+void motionStateUpdate(motion_src_e src, motionState_e newState);
 
 void modeTryToStop(void);
 uint8_t isModeDone(void);

@@ -71,6 +71,9 @@ typedef struct
     uint8_t runFsm;
     uint8_t gpsFsm;
     uint8_t gpsOnoff;
+    uint8_t moduleFsm;
+    uint8_t moduleReq;		//这个请求是互斥的，不是或的关系
+    uint16_t moduleFsmTick;
     uint8_t gsensorTapCnt;
     uint8_t terminalStatus;
     uint8_t sysLedState;
@@ -88,6 +91,8 @@ typedef struct
     uint16_t gpsuploadonepositiontime;
     uint16_t alarmRequest;
 	uint32_t sysMinutes;
+
+	uint32_t staticUploadTick;
 
     uint32_t gpsRequest;	  /*GPS 开关请求*/
     uint32_t sysTick;    /*系统节拍*/
@@ -110,11 +115,14 @@ typedef struct
 	uint16_t mode4NoNetTick;
 	uint8_t netRequest;
 
-
+	uint8_t mode4alarmDate;
+    uint8_t mode4alarmHour;
+    uint8_t mode4alarmMinute;
     uint16_t nonetTick;
     uint8_t lockTick;
-    uint16_t mode4RunMin;
-	
+
+	uint16_t noNetTime;
+	uint16_t mode4RunMin;
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;
@@ -144,6 +152,8 @@ void updateRTCtimeRequest(void);
 void byteArrayInvert(uint8 *data, uint8 dataLen);
 void stringToLowwer(char *str, uint16_t strlen);
 void showByteData(uint8_t *mark, uint8_t *buf, uint16_t len);
+void sort(float *a, uint8_t n);
+
 
 
 

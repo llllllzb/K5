@@ -2,7 +2,7 @@
 #define APPSERVERPROTOCOL
 
 #include <stdint.h>
-
+#include "app_gps.h"
 
 #define WIFIINFOMAX		15
 typedef enum{
@@ -95,6 +95,7 @@ void getInsid(void);
 void setInsId(void);
 
 void gpsRestoreUpload(void);
+void updateHistoryGpsTime(gpsinfo_s *gpsinfo);
 
 
 void protocolSnRegister(char *sn);

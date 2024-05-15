@@ -20,9 +20,9 @@
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 //实际是0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x2B
 #define BOOT_PARAM_FLAG         0xB0
-#define OTA_PARAM_FLAG          0xC2
+#define OTA_PARAM_FLAG          0xC3
 
-#define EEPROM_VERSION									"K5-CS_ML307A_HD_V2.3.0"
+#define EEPROM_VERSION									"K5-CS_ML307A_HD_V2.3.1"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -96,8 +96,7 @@ typedef struct
 
 
 	uint8_t cm;
-//	uint8_t sosNum[3][20];
-//	uint8_t centerNum[20];
+
 	uint8_t sosalm;
 	uint8_t tiltalm;		/*作为Gsensor和倾斜检测的切换标志，1：倾斜版本， 0：Gsensor版本*/
 	uint8_t leavealm;
@@ -109,13 +108,13 @@ typedef struct
 	uint8_t agpsen;
 	uint8_t debug;
 
-	uint16_t mode4Alarm123;
+	uint16_t mode4Alarm;
 	uint8_t smsreply;
 	uint8_t bf;
-	uint8_t angleTurnThrd;	//拐弯补传阈值
+	uint8_t batsel;
 	uint16_t mode4GapMinutes;
 	uint16_t mode4noNetWakeUpMinutes;
-	uint8_t SN[20];
+	uint8_t SN[20];			//备份SN号
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

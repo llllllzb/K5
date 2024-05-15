@@ -430,6 +430,26 @@ void stringToLowwer(char *str, uint16_t strlen)
     }
 }
 
+
+void sort(float *a, uint8_t n)
+{
+	uint8_t i, j;
+	float t;
+    for (i=0; i < n; ++i)//n个数,总共需要进行n-1次
+    {                 //n-1个数排完,第一个数一定已经归位
+        //每次会将最大(升序)或最小(降序)放到最后面
+        for(j = 0;j < n - i - 1; ++j)
+        {
+            if (a[j]>a[j+1])//每次冒泡,进行交换
+            {
+                t=a[j];
+                a[j]=a[j+1];
+                a[j+1]=t;
+            }
+        }
+	}
+}
+
 /**************************************************
 @bref		打印原始字节数据
 @param

@@ -50,7 +50,9 @@ const instruction_s insCmdTable[] =
     {SMSREPLY_INS, "SMSREPLY"},
     {BF_INS, "BF"},
     {CF_INS, "CF"},
-    {ANGLETURNTHRD_INS, "ANGLETURNTHRD"},
+    {ADCCAL_INS, "ADCCAL"},
+    {BATSEL_INS, "BATSEL"},
+    {MOTIONDET_INS, "MOTIONDET"},
     {SN_INS, "SN"},
 };
 
@@ -175,7 +177,7 @@ static void doParamInstruction(ITEM *item, char *message)
             sprintf(message + strlen(message), "Mode23: %d minutes;", sysparam.gapMinutes);
             break;
        	case MODE4:
-       	    sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
+sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
        		break;
     }
 
@@ -282,9 +284,7 @@ static void doModeInstruction(ITEM *item, char *message)
     {
     	if (sysparam.MODE == MODE4)
     	{
-			sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
-
-    	}
+			sprintf(message + strlen(message), "Mode%d,%d,%d", sysparam.MODE, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);    	}
     	else
     	{
         	sprintf(message, "Mode%d,%d,%d", sysparam.MODE, sysparam.gpsuploadgap, sysparam.gapMinutes);
@@ -357,7 +357,22 @@ static void doModeInstruction(ITEM *item, char *message)
                 else
                 {
                     sysparam.MODE = MODE21;
-                    portGsensorCtl(0);
+                    portGsensorCtl(1);
+                    if (getTerminalAccState())
+                    {
+                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX && sysparam.gpsuploadgap != 0)
+                        {
+                            gpsRequestSet(GPS_REQUEST_ACC_CTL);
+                        }
+                        else
+                        {
+                            gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                        }
+                    }
+                    else
+                    {
+                        gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                    }
                 }
                 sprintf(message, "Change to Mode%d,and work on at", workmode);
                 for (i = 0; i < timecount; i++)
@@ -418,14 +433,13 @@ static void doModeInstruction(ITEM *item, char *message)
                                 "The device switches to mode 2 and uploads the position every %d seconds when moving, and every %d minutes when standing still",
                                 sysparam.gpsuploadgap, sysparam.gapMinutes);
                     }
-
                 }
                 break;
             case 3:
             case 23:
                 if (workmode == MODE3)
                 {
-                	if (item->item_data[2][0] != 0)
+                	if (atoi(item->item_data[2]) != 0)
                 	{
                 		sysparam.gapMinutes = (uint16_t)atoi(item->item_data[2]);
                 	}
@@ -449,11 +463,11 @@ static void doModeInstruction(ITEM *item, char *message)
                 }
                 else
                 {
-                	if (item->item_data[2][0] != 0)
+                	if (atoi(item->item_data[2]) != 0)
                 	{
 						sysparam.gpsuploadgap = (uint16_t)atoi((const char *)item->item_data[2]);
                 	}
-                    if (item->item_data[3][0] != 0)
+                    if (atoi(item->item_data[3]) != 0)
                     {
                         sysparam.gapMinutes = (uint16_t)atoi((const char *)item->item_data[3]);
                     }
@@ -465,6 +479,21 @@ static void doModeInstruction(ITEM *item, char *message)
 					{
 						sysparam.gapMinutes = 10080;
 					}
+					if (getTerminalAccState())
+                    {
+                        if (sysparam.gpsuploadgap < GPS_UPLOAD_GAP_MAX && sysparam.gpsuploadgap != 0)
+                        {
+                            gpsRequestSet(GPS_REQUEST_ACC_CTL);
+                        }
+                        else
+                        {
+                            gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                        }
+                    }
+                    else
+                    {
+                        gpsRequestClear(GPS_REQUEST_ACC_CTL);
+                    }
                     sysparam.MODE = MODE23;
                     portGsensorCtl(1);
                     sprintf(message, "Change to mode %d and update interval time to %d s %d m;", workmode, sysparam.gpsuploadgap,
@@ -494,6 +523,7 @@ static void doModeInstruction(ITEM *item, char *message)
                 startTimer(50, changeMode4Callback, 0);
                 sprintf(message, "Change to mode %d %d %d", workmode, sysparam.mode4GapMinutes, sysparam.mode4noNetWakeUpMinutes);
             	break;
+
             default:
                 strcpy(message, "Unsupport mode");
                 break;
@@ -601,7 +631,7 @@ void doUPSInstruction(ITEM *item, char *message)
         bootParamSaveAll();
     }
     bootParamGetAll();
-    sprintf(message, "The device will download the firmware from %s:%d in 8 seconds", bootparam.updateServer,
+    sprintf(message, "The device will download the firmware from %s:%d in 10 seconds", bootparam.updateServer,
             bootparam.updatePort);
     bootparam.updateStatus = 1;
     strcpy(bootparam.SN, dynamicParam.SN);
@@ -611,7 +641,7 @@ void doUPSInstruction(ITEM *item, char *message)
     strcpy(bootparam.codeVersion, EEPROM_VERSION);
     bootParamSaveAll();
     startTimer(30, modulePowerOff, 0);
-    startTimer(80, portSysReset, 0);
+    startTimer(70, portSysReset, 0);
 }
 
 void doLOWWInstruction(ITEM *item, char *message)
@@ -697,9 +727,9 @@ void doPOITYPEInstruction(ITEM *item, char *message)
 
 void doResetInstruction(ITEM *item, char *message)
 {
-    sprintf(message, "System will reset after 8 seconds");
+    sprintf(message, "System will reset after 10 seconds");
 	startTimer(30, modulePowerOff, 0);
-    startTimer(80, portSysReset, 0);
+    startTimer(150, portSysReset, 0);
 }
 
 void doUTCInstruction(ITEM *item, char *message)
@@ -737,11 +767,8 @@ void doDebugInstrucion(ITEM *item, char *message)
             sysinfo.sysTick / 3600, sysinfo.sysTick % 3600 / 60, sysinfo.sysTick % 60, sysinfo.gpsRequest,
             sysinfo.gpsUpdatetick / 3600, sysinfo.gpsUpdatetick % 3600 / 60, sysinfo.gpsUpdatetick % 60);
     sprintf(message + strlen(message), "hideLogin:%s;", hiddenServerIsReady() ? "Yes" : "No");
-    sprintf(message + strlen(message), "bak sn:%s;", sysparam.SN);
-    sysparam.debug = 5;
-    dynamicParam.debug = 5;
-    paramSaveAll();
-    dynamicParamSaveAll();
+    sprintf(message + strlen(message), "netreq:%d lbsreq:%d %d wifireq:%d %d ", sysinfo.netRequest, sysinfo.lbsRequest, sysinfo.lbsExtendEvt, sysinfo.wifiRequest, sysinfo.wifiExtendEvt);
+	sprintf(message + strlen(message), "bak sn:%s;", sysparam.SN);
 }
 
 void doACCCTLGNSSInstrucion(ITEM *item, char *message)
@@ -974,6 +1001,30 @@ static void doBleServerInstruction(ITEM *item, char *message)
     }
 }
 
+static void doMotionDetInstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Motion param %d,%d,%d", sysparam.gsdettime, sysparam.gsValidCnt, sysparam.gsInvalidCnt);
+    }
+    else
+    {
+        portGsensorCtl(0);
+        sysparam.gsdettime = atoi(item->item_data[1]);
+        sysparam.gsValidCnt = atoi(item->item_data[2]);
+        sysparam.gsInvalidCnt = atoi(item->item_data[3]);
+
+        sysparam.gsdettime = (sysparam.gsdettime > motionGetSize() ||
+                              sysparam.gsdettime == 0) ? motionGetSize() : sysparam.gsdettime;
+        sysparam.gsValidCnt = (sysparam.gsValidCnt > sysparam.gsdettime ||
+                               sysparam.gsValidCnt == 0) ? sysparam.gsdettime : sysparam.gsValidCnt;
+
+        sysparam.gsInvalidCnt = sysparam.gsInvalidCnt > sysparam.gsValidCnt ? sysparam.gsValidCnt : sysparam.gsInvalidCnt;
+        paramSaveAll();
+        sprintf(message, "Update motion param to %d,%d,%d", sysparam.gsdettime, sysparam.gsValidCnt, sysparam.gsInvalidCnt);
+        portGsensorCtl(1);
+    }
+}
 
 void doTimerInstrucion(ITEM *item, char *message)
 {
@@ -1332,19 +1383,43 @@ void doCFInstruction(ITEM *item, char *message)
     strcpy(message, "CF OK");
 }
 
-void doAngleTurnThrdIntstruction(ITEM *item, char *message)
+void doAdccalInstrucion(ITEM *item, char *message)
+{
+    float vol;
+    uint8_t type;
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+		sprintf(message, "ADC cal param: %f", sysparam.adccal);
+    }
+    else
+    {
+        vol = atof(item->item_data[1]);
+        type = atoi(item->item_data[2]);
+        if (type == 0)
+        {
+        	float x;
+            x = portGetAdcVol(ADC_CHANNEL);
+            sysparam.adccal = vol / x;
+        }
+        else
+        {
+            sysparam.adccal = vol;
+        }
+        paramSaveAll();
+		sprintf(message, "Update ADC calibration parameter to %f", sysparam.adccal);
+    }
+}
+
+void doBatSelInstruction(ITEM *item, char *message)
 {
 	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
 	{
-		sprintf(message, "Angle turn threshold is %d", sysparam.angleTurnThrd);
+		sprintf(message, "Bat sel is %s battery", sysparam.batsel ? "High-voltage" : "Atmospheric");
 	}
 	else
 	{
-		if (item->item_data[1][0] != 0)
-		{
-			sysparam.angleTurnThrd = atoi(item->item_data[1]);
-		}
-		sprintf(message, "Update angle turn threshold to %d", sysparam.angleTurnThrd);
+		sysparam.batsel = atoi(item->item_data[1]);
+		sprintf(message, "Update bat sel to %s battery", sysparam.batsel ? "High-voltage" : "Atmospheric");
 		paramSaveAll();
 	}
 }
@@ -1360,15 +1435,13 @@ void doSnIntstruction(ITEM *item, char *message)
         memcpy(dynamicParam.SN, item->item_data[1], 15);
         dynamicParam.SN[15] = 0;
         sprintf(message, "Update Sn %s", dynamicParam.SN);
-//        strncpy(sysparam.SN, dynamicParam.SN, 15);
-//		sysparam.SN[15] = 0;
-//		LogPrintf(DEBUG_ALL, "Bak SN:%s", sysparam.SN);
-//		paramSaveAll();
+        strncpy(sysparam.SN, dynamicParam.SN, 15);
+		sysparam.SN[15] = 0;
+		LogPrintf(DEBUG_ALL, "Bak SN:%s", sysparam.SN);
+		paramSaveAll();
         dynamicParamSaveAll();
     }
 }
-
-
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1487,9 +1560,15 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case CF_INS:
            	doCFInstruction(item, message);
            	break;
-       	case ANGLETURNTHRD_INS:
-			doAngleTurnThrdIntstruction(item, message);
-       		break;
+        case ADCCAL_INS:
+        	doAdccalInstrucion(item, message);
+        	break;
+        case BATSEL_INS:
+			doBatSelInstruction(item, message);
+        	break;
+        case MOTIONDET_INS:
+			doMotionDetInstruction(item, message);
+        	break;
        	case SN_INS:
        	    doSnIntstruction(item, message);
        	    break;

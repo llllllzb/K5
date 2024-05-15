@@ -49,13 +49,13 @@ void paramDefaultInit(uint8_t level)
         sysparam.VERSION = APP_PARAM_FLAG;
         strcpy(dynamicParam.SN, "888888887777777");
         strncpy(dynamicParam.jt808sn, "888777", 6);
-
-        strcpy(sysparam.Server, "39.105.31.47");
+		strcpy(sysparam.SN, "888888887777777");
+        strcpy(sysparam.Server, "jzwz.basegps.com");
         strcpy(sysparam.hiddenServer, "jzwz.basegps.com");
         strcpy(sysparam.bleServer, "jzwz.basegps.com");
         strcpy(sysparam.jt808Server, "47.106.96.28");
 
-        sysparam.ServerPort = 7700;
+        sysparam.ServerPort = 9998;
         sysparam.bleServerPort = 9998;
         sysparam.hiddenPort = 9998;
         sysparam.jt808Port = 9997;
@@ -99,17 +99,18 @@ void paramDefaultInit(uint8_t level)
     sysparam.sosalm = ALARM_TYPE_NONE;
     sysparam.ldrEn = 1;
     sysparam.tiltalm = 0;
-    sysparam.gsdettime=0;
-    sysparam.gsValidCnt=0;
+    sysparam.gsdettime=15;
+    sysparam.gsValidCnt=5;
     sysparam.gsInvalidCnt=0;
     sysparam.hiddenServOnoff = 0;
-    sysparam.angleTurnThrd = 15;
     sysparam.debug = 0;
     sysparam.agpsen = 1;
     dynamicParam.debug = 0;
+    sysparam.mode4Alarm = 1200;
     sysparam.mode4GapMinutes = 1440;
-    sysparam.mode4noNetWakeUpMinutes = 60;
-    sysparam.smsreply = 0;
+    sysparam.mode4noNetWakeUpMinutes = 60;    
+	sysparam.smsreply = 0;
+	sysparam.batsel = 0;
     sysparam.bf = 0;
     dynamicParamSaveAll();
     paramSaveAll();
@@ -134,6 +135,9 @@ void paramInit(void)
 		    sysparam.SN[15] = 0;
 		    LogPrintf(DEBUG_ALL, "Bak SN:%s", sysparam.SN);
 	    }
+	    sysparam.mode4GapMinutes = 1440;
+    	sysparam.mode4noNetWakeUpMinutes = 60;
+    	sysparam.batsel = 0;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

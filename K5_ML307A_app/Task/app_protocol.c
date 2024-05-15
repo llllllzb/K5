@@ -556,18 +556,46 @@ void gpsRestoreDataSend(gpsRestore_s *grs, char *dest	, uint16_t *len)
 uint8_t getBatteryLevel(void)
 {
     uint8_t level = 0;
-    if (sysinfo.insidevoltage > 4.1)
+    if (sysparam.batsel)
     {
-        level = 100;
+	    if (sysinfo.insidevoltage >= 4.2)
+	    {
+	        level = 100;
 
-    }
-    else if (sysinfo.insidevoltage < 3.3)
-    {
-        level = 0;
+	    }
+	    else if (sysinfo.insidevoltage < 4.2 && sysinfo.insidevoltage >= 3.6)
+	    {
+	        level = (uint8_t)(((sysinfo.insidevoltage - 3.6) / 0.6 * 0.8 + 0.2) * 100);
+	    }
+	    else if (sysinfo.insidevoltage < 3.6 && sysinfo.insidevoltage >= 3.0)
+	    {
+	        level = (uint8_t)((sysinfo.insidevoltage - 3.0) / 0.6 * 0.2 * 100);
+	    }
+	    else
+	    {
+			level = 0;
+	    }
     }
     else
     {
-        level = (uint8_t)((sysinfo.insidevoltage - 3.3) / 0.8 * 100);
+	    if (sysinfo.insidevoltage >= 4.1)
+	    {
+	        level = 100;
+
+	    }
+	    else if (sysinfo.insidevoltage < 4.1 && sysinfo.insidevoltage >= 3.6)
+	    {
+	        level = (uint8_t)(((sysinfo.insidevoltage - 3.6) / 0.5 * 0.8 + 0.2) * 100);
+	    }
+	    else if (sysinfo.insidevoltage < 3.6 && sysinfo.insidevoltage >= 3.0)
+	    {
+	        level = (uint8_t)((sysinfo.insidevoltage - 3.0) / 0.6 * 0.2 * 100);
+	    }
+	    else
+	    {
+			level = 0;
+	    }
+
     }
     return level;
 }
@@ -883,6 +911,49 @@ int createProtocol8A(unsigned short Serial, char *DestBuf)
     return pdu_len;
 }
 
+/**************************************************
+@bref		修改定位包的时间
+@param
+@return
+@note
+把历史已发送成功的定位包修改成现在的时间的定位包
+**************************************************/
+
+void updateHistoryGpsTime(gpsinfo_s *gpsinfo)
+{
+	uint16_t year;
+	uint8_t  month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+	datetime_s datetimenew;
+	portGetRtcDateTime(&year, &month, &day, &hour, &minute, &second);
+	gpsinfo->datetime.year   = year % 100;
+	gpsinfo->datetime.month  = month;
+	gpsinfo->datetime.day    = day;
+	gpsinfo->datetime.hour   = hour;
+	gpsinfo->datetime.minute = minute;
+	gpsinfo->datetime.second = second;
+	gpsinfo->hadupload       = 0;
+	datetimenew = changeUTCTimeToLocalTime(gpsinfo->datetime, -sysparam.utc);//减回0时区
+	gpsinfo->datetime.year   = datetimenew.year % 100;
+	gpsinfo->datetime.month  = datetimenew.month;
+	gpsinfo->datetime.day    = datetimenew.day;
+	gpsinfo->datetime.hour   = datetimenew.hour;
+	gpsinfo->datetime.minute = datetimenew.minute;
+	gpsinfo->datetime.second = datetimenew.second;
+	LogPrintf(DEBUG_ALL, "gpsRequestSet==>Upload last fixed poi [%02d/%02d/%02d-%02d/%02d/%02d]:lat:%.2f  lon:%.2f", 
+														    year % 100, 
+														    month,
+														    day,
+														    hour,
+														    minute,
+														    second,
+														    gpsinfo->latitude,
+														    gpsinfo->longtitude);
+}
+
 
 /**************************************************
 @bref		生成序列号
@@ -1138,6 +1209,7 @@ static void protoclparase13(uint8_t link, char *protocol, int size)
     if (link == NORMAL_LINK)
     {
         hbtRspSuccess();
+        netRequestClear();
     }
 }
 

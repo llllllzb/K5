@@ -830,7 +830,7 @@ static int8_t calculateTheGPSCornerPoint(void)
     }
     sprintf(debug, "Total course=%d", coursechange);
     LogMessage(DEBUG_ALL, debug);
-    if (coursechange >= sysparam.angleTurnThrd && coursechange <= 45)
+    if (coursechange >= 15 && coursechange <= 45)
     {
         protocolSend(NORMAL_LINK, PROTOCOL_12, &gpsfifo->gpsinfohistory[positionidnex[1]]);
         protocolSend(NORMAL_LINK, PROTOCOL_12, &gpsfifo->gpsinfohistory[positionidnex[3]]);

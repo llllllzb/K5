@@ -52,7 +52,9 @@ typedef enum
     SMSREPLY_INS,
     BF_INS,
     CF_INS,
-    ANGLETURNTHRD_INS,
+    ADCCAL_INS,
+    BATSEL_INS,
+    MOTIONDET_INS,
     SN_INS,
 } INSTRUCTIONID;
 

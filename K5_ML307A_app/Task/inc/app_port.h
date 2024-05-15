@@ -150,6 +150,7 @@ void portGetRtcDateTime(uint16_t *year, uint8_t *month, uint8_t *date, uint8_t *
 void portUpdateRtcDateTime(uint8_t year, uint8_t month, uint8_t date, uint8_t hour, uint8_t minute, uint8_t second);
 int portSetNextAlarmTime(void);
 void portSetNextWakeUpTime(void);
+int portSetNextMode4AlarmTime(void);
 
 void portLowPowerCfg(void);
 
