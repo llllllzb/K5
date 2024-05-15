@@ -723,79 +723,9 @@ static void gpsUplodOnePointTask(void)
 			centralPointInit(getCurrentGPSInfo());
 	    }
     }
-
-//    gpsinfo_s *gpsinfo;
-//    static uint16_t runtick = 0;
-//    static uint8_t uploadtick = 0;
-//    uint8_t total, i;
-//    //判断是否有请求该事件
-//    if (sysinfo.gpsOnoff == 0)
-//        return;
-//    if (gpsRequestGet(GPS_REQUEST_UPLOAD_ONE) == 0)
-//    {
-//        runtick = 0;
-//        uploadtick = 0;
-//        return;
-//    }
-//    gpsinfo = getCurrentGPSInfo();
-//    runtick++;
-//    if (gpsinfo->fixstatus == 0)
-//    {
-//        uploadtick = 0;
-//        if (runtick >= sysinfo.gpsuploadonepositiontime)
-//        {
-//            runtick = 0;
-//            uploadtick = 0;
-//            LogPrintf(DEBUG_ALL, "gps fix time out");
-//            gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
-//            if (getTerminalAccState() == 0)
-//            {
-//            	wifiRequestSet(DEV_EXTEND_OF_MY);
-//            }
-//        }
-//        return;
-//    }
-//    runtick = 0;
-//    ++uploadtick;
-//    for (i = 0; i < sizeof(gpsinfo->gpsCn); i++)
-//    {
-//        if (gpsinfo->gpsCn[i] >= 40)
-//            total++;
-//    }
-//    for (i = 0; i < sizeof(gpsinfo->beidouCn); i++)
-//    {
-//        if (gpsinfo->beidouCn[i] >= 40)
-//            total++;
-//    }
-//    if ((gpsinfo->used_star >= 10 && gpsinfo->pdop < 3.30) ||
-//        (gpsinfo->used_star >= 8 && total >= 10) ||
-//        (gpsinfo->used_star >= 10 && total >= 8) ||
-//         gpsinfo->used_star >= 13 ||
-//         gpsinfo->pdop <= 1.90)
-//    {
-//		uploadtick = 0;
-//        if (sysinfo.flag123)
-//        {
-//            dorequestSend123();
-//        }
-//        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
-//        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
-//        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
-//    }
-//    else if (uploadtick >= 10)
-//    {
-//		uploadtick = 0;
-//        if (sysinfo.flag123)
-//        {
-//            dorequestSend123();
-//        }
-//        protocolSend(NORMAL_LINK, PROTOCOL_12, getCurrentGPSInfo());
-//        jt808SendToServer(TERMINAL_POSITION, getCurrentGPSInfo());
-//        gpsRequestClear(GPS_REQUEST_UPLOAD_ONE);
-//    }
-
-
 }
+
+
 
 /**************************************************
 @bref		报警上送请求
@@ -1858,7 +1788,7 @@ static void sysRunTimeCnt(void)
 static void moduleErrDet(void)
 {
 	static uint8_t tick = 0;
-	if (isModulePowerOff() && getTerminalAccState())
+	if (getModulePwrState() == 0 && getTerminalAccState())
 	{
 		tick++;
 		if (tick >= 60)
@@ -1951,7 +1881,7 @@ static void modeDone(void)
 	//进入到这个模式就把sysinfo.canRunFlag置零，以免别的唤醒源让GPS未经电压检测就起来工作
 	sysinfo.canRunFlag = 0;
 	static uint8_t tick = 0;
-	if (isModulePowerOff() == 0)
+	if (getModulePwrState() == 1)
 	{
 		if (++tick >= 60)
 			modulePowerOff();
@@ -1981,7 +1911,7 @@ static void modeDone(void)
     {
 		/*检测gsensor是否有中断进来*/
 		//LogPrintf(DEBUG_ALL, "motioncnt:%d, motionTick:%d ", motionCheckOut(sysparam.gsdettime), motionTick);
-		if (motionCheckOut(sysparam.gsdettime) <= 1)
+		if (motionCheckOut(sysparam.gsdettime) < 1)
 		{
 			if (sysinfo.sleep)
 			{
@@ -2910,6 +2840,7 @@ static tmosEvents myTaskEventProcess(tmosTaskID taskID, tmosEvents events)
     {
         kernalRun();
         portWdtFeed();
+        moduleRequestTask();
         return events ^ APP_TASK_KERNAL_EVENT;
     }
 

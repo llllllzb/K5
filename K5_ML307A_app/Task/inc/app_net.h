@@ -212,6 +212,13 @@ void modulePowerOn(void);
 void modulePowerOff(void);
 void moduleReset(void);
 
+
+void moduleRequestTask(void);
+uint8_t moduleReqGet(void);
+void moduleReqSet(uint8_t req);
+uint8_t getModulePwrState(void);
+
+
 void openSocket(uint8_t link, char *server, uint16_t port);
 void closeSocket(uint8_t link);
 void netRequestSet(void);

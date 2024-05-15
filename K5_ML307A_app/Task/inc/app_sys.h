@@ -71,6 +71,9 @@ typedef struct
     uint8_t runFsm;
     uint8_t gpsFsm;
     uint8_t gpsOnoff;
+    uint8_t moduleFsm;
+    uint8_t moduleReq;		//这个请求是互斥的，不是或的关系
+    uint16_t moduleFsmTick;
     uint8_t gsensorTapCnt;
     uint8_t terminalStatus;
     uint8_t sysLedState;

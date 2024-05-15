@@ -1027,7 +1027,7 @@ void portGsensorCtl(uint8_t onoff)
         R16_PB_INT_EN &= ~GSINT_PIN;
         terminalAccoff();
         motionClear();
-        gpsRequestClear(GPS_REQUEST_ACC_CTL); //
+        gpsRequestClear(GPS_REQUEST_ACC_CTL); //如果acc off要关闭gps的acc请求
     }
     LogPrintf(DEBUG_ALL, "gsensor %s", onoff ? "On" : "Off");
 }

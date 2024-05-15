@@ -111,6 +111,10 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
         PORT_SUPPLY_OFF;
         LogMessage(DEBUG_ALL, "supply off");
     }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"LBS"))
+    {
+		moduleGetLbs();
+    }
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"GPSCLOSE"))
     {
         sysinfo.gpsRequest = 0;
@@ -154,6 +158,10 @@ static void doAtdebugCmd(uint8_t *buf, uint16_t len)
     else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"MUL"))
     {
 		portUartCfg(APPUSART0, 0, 57600, NULL);
+    }
+    else if (mycmdPatch((uint8_t *)item.item_data[0], (uint8_t *)"MR"))
+    {
+		moduleReqSet(atoi(item.item_data[1]));
     }
     else
     {
@@ -549,5 +557,6 @@ void atCmdParserFunction(uint8_t *buf, uint16_t len)
     else
     {
         createNode(buf, len, 0);
+        //portUartSend(&usart0_ctl, buf, len);
     }
 }

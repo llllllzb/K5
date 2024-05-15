@@ -218,8 +218,12 @@ void outputNode(void)
         }
         else
         {
-        	/* 模组关机状态DTR脚置低,模组关机的时候最好不要阻止这里发完AT指令,不然会一直占着堆空间 */
-        	if (isModulePowerOff())
+        	/* 
+        		模组关机状态时DTR脚要置低;
+        		如果置高的话模组会一直有1.5V左右的电,这样会导致模组可能会关不了机,也开不了机,需要整机断电才行;
+        		另外模组关机的时候最好不要阻止这里发完AT指令,不然会一直占着堆空间
+        	*/
+        	if (moduleState.powerState == 0)	//关机或者正在开关机 DTR都拉低
         	{
             	WAKEMODULE;
             }
@@ -368,17 +372,7 @@ static void modulePressPowerKey(void)
 
 void modulePowerOn(void)
 {
-    LogMessage(DEBUG_ALL, "modulePowerOn");
-    moduleInit();
-    sysinfo.moduleRstFlag = 1;
-    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
-    POWER_ON;
-    PWRKEY_HIGH;
-    RSTKEY_HIGH;
-    startTimer(6, modulePressPowerKey, 0);
-    moduleState.gpsFileHandle = 1;
-    moduleCtrl.scanMode = 0;
-    socketDelAll();
+	moduleReqSet(MODULE_REQUEST_OPEN);
 }
 
 /**************************************************
@@ -422,6 +416,7 @@ static void modulePowerOffProcess(void)
 	LogMessage(DEBUG_ALL, "modulePowerOffProcess");
 }
 
+
 /**************************************************
 @bref		模组关机
 @param
@@ -433,15 +428,8 @@ static void modulePowerOffProcess(void)
 
 void modulePowerOff(void)
 {
-    LogMessage(DEBUG_ALL, "modulePowerOff");
-    portUartCfg(APPUSART0, 0, 57600, NULL);
-    POWER_OFF;
-    RSTKEY_HIGH;
-    PWRKEY_HIGH;
-    moduleInit();
-    //startTimer(5, modulePowerOffProcess, 0);
-    sysinfo.moduleRstFlag = 1;
-    socketDelAll();
+	moduleReqSet(MODULE_REQUEST_CLOSE);
+
 }
 
 /**************************************************
@@ -465,14 +453,243 @@ static void moduleReleaseRstkey(void)
 
 void moduleReset(void)
 {
-    LogMessage(DEBUG_ALL, "moduleReset");
-    moduleInit();
-    portUartCfg(APPUSART0, 0, 57600, NULL);
-    PWRKEY_HIGH;
-    RSTKEY_HIGH;
-    POWER_OFF;
-    startTimer(20, modulePowerOn, 0);
-    socketDelAll();
+	//moduleState.powerState == 0表示设备处于关机或者处于开关机状态
+	//如果已经处于开关机状态，就没必要有这个请求了
+	if (moduleState.powerState != 0)
+		moduleReqSet(MODULE_REQUEST_RESET);
+}
+
+/**************************************************
+@bref		模组断电重启
+@param
+@return
+@note
+**************************************************/
+void moduleShutdownStartup(void)
+{
+	moduleReqSet(MODULE_REQUESR_SHUTDOWN_OPEN);
+}
+
+/**************************************************
+@bref		模组开关状态获取
+@param
+@return    0：关机完毕
+		   1：开机完毕
+		   2：正在进行开关机
+@note
+**************************************************/
+
+uint8_t getModulePwrState(void)
+{
+	/* 请求是关闭且模组电源状态机是关闭状态 */
+	if (sysinfo.moduleReq == 0 && sysinfo.moduleFsm == MODULE_FSM_CLOSE_DONE)
+		return 0;
+	if (sysinfo.moduleReq == 0 && sysinfo.moduleFsm == MODULE_FSM_OPEN_DONE)
+	    return 1;
+	return 2;
+}
+
+/**************************************************
+@bref		模组电源请求设置
+@param
+@return
+@note
+**************************************************/
+
+void moduleReqSet(uint8_t req)
+{
+	sysinfo.moduleReq = req;
+	LogPrintf(DEBUG_ALL, "moduleReqSet==>%d", sysinfo.moduleReq);
+}
+
+/**************************************************
+@bref		模组电源请求清除
+@param
+@return
+@note
+**************************************************/
+void moduleReqClear(void)
+{
+	if (sysinfo.moduleReq != 0)
+	{
+		sysinfo.moduleReq = 0;
+		LogPrintf(DEBUG_ALL, "moduleReqClear");
+	}
+}
+
+/**************************************************
+@bref		模组电源请求查询
+@param
+@return
+@note
+**************************************************/
+
+uint8_t moduleReqGet(void)
+{
+	return sysinfo.moduleReq;
+}
+
+/**************************************************
+@bref		模组电源状态机切换
+@param
+@return
+@note
+**************************************************/
+
+static void moduleFsmChange(uint8_t fsm)
+{
+	sysinfo.moduleFsm = fsm;
+	sysinfo.moduleFsmTick = 0;
+}
+
+/**************************************************
+@bref		模组电源状态机
+@param
+@return
+@note
+sysinfo.moduleReq为开机、关机、复位、断电复位的请求
+这4个请求均为互斥，状态机接收到请求后开始执行并清除掉这个请求
+在处理完一个请求之前来第二个请求时，会保存此次请求，直到完成当前请求
+当前请求处理完成之后，会判断下一个请求是否合理，才选择是否执行
+比如当完成关机请求后，来了一个复位请求，不合理，则清除此次请求
+
+**************************************************/
+void moduleRequestTask(void)
+{
+	switch (sysinfo.moduleFsm)
+	{
+	case MODULE_FSM_CLOSE_DONE:
+		if (sysinfo.moduleReq == MODULE_REQUEST_OPEN)
+		{
+			LogMessage(DEBUG_ALL, "modulePowerOn");
+		    moduleInit();
+		    sysinfo.moduleRstFlag = 1;
+		    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
+		    POWER_ON;
+		    PWRKEY_HIGH;
+		    RSTKEY_HIGH;
+		    moduleState.gpsFileHandle = 1;
+		    moduleCtrl.scanMode = 0;
+		    socketDelAll();
+			moduleFsmChange(MODULE_FSM_OPEN_ING1);
+		}
+		else
+		{
+			//把模组唤醒tick清除 让mcu更快进入休眠
+		    sysinfo.ringWakeUpTick = 0;
+		    sysinfo.cmdTick = 0;
+		    sysinfo.irqTick = 0;
+		}
+		moduleReqClear();
+		break;
+	case MODULE_FSM_OPEN_ING1:
+		if (++sysinfo.moduleFsmTick > 5)	//500ms
+		{
+			PWRKEY_LOW;
+			moduleFsmChange(MODULE_FSM_OPEN_ING2);
+		}
+		break;
+	case MODULE_FSM_OPEN_ING2:
+		if (++sysinfo.moduleFsmTick > 25)	//2500ms
+		{
+			PWRKEY_HIGH;
+			moduleState.powerState = 1;
+			
+			LogMessage(DEBUG_ALL, "modulePowerOnDone");
+			moduleFsmChange(MODULE_FSM_OPEN_DONE);
+		}
+		break;
+	case MODULE_FSM_OPEN_ING3:
+		
+		moduleFsmChange(MODULE_FSM_OPEN_DONE);
+		break;
+	case MODULE_FSM_OPEN_DONE:
+		if (sysinfo.moduleReq == MODULE_REQUEST_CLOSE)
+		{
+			LogMessage(DEBUG_ALL, "modulePowerOff");
+		    portUartCfg(APPUSART0, 0, 57600, NULL);
+		    RSTKEY_HIGH;
+		    PWRKEY_HIGH;
+		    WAKEMODULE;
+		    moduleInit();
+		    
+		    sysinfo.moduleRstFlag = 1;
+		    socketDelAll();
+		    moduleFsmChange(MODULE_FSM_CLOSE_ING);
+		}
+		else if (sysinfo.moduleReq == MODULE_REQUEST_RESET)
+		{
+			RSTKEY_HIGH;
+			moduleInit();
+			moduleFsmChange(MODULE_FSM_RESET_ING1);
+		}
+		else if (sysinfo.moduleReq == MODULE_REQUESR_SHUTDOWN_OPEN)
+		{
+			LogMessage(DEBUG_ALL, "module shut down");
+		    portUartCfg(APPUSART0, 0, 57600, NULL);
+		    RSTKEY_HIGH;
+		    PWRKEY_HIGH;
+		    WAKEMODULE;
+		    moduleInit();
+		    
+		    sysinfo.moduleRstFlag = 1;
+		    socketDelAll();
+			moduleFsmChange(MODULE_FSM_SHUTDOWN_ING);
+		}
+		moduleReqClear();
+		break;
+	case MODULE_FSM_CLOSE_ING:
+		LogMessage(DEBUG_ALL, "modulePowerOffDone");
+	   	POWER_OFF;
+	    moduleFsmChange(MODULE_FSM_CLOSE_DONE);
+		break;
+	case MODULE_FSM_RESET_ING1:
+		if (++sysinfo.moduleFsmTick > 5)	//500ms
+		{
+			LogMessage(DEBUG_ALL, "modulePowerReset");
+			RSTKEY_LOW;
+			moduleFsmChange(MODULE_FSM_RESET_ING2);
+		}
+		break;
+	case MODULE_FSM_RESET_ING2:
+		if (++sysinfo.moduleFsmTick > 10)	//1000ms
+		{
+			LogMessage(DEBUG_ALL, "modulePowerResetDone");
+			RSTKEY_HIGH;
+			moduleState.powerState = 1;
+			moduleFsmChange(MODULE_FSM_OPEN_DONE);
+		}
+		break;
+	case MODULE_FSM_SHUTDOWN_ING:
+		LogMessage(DEBUG_ALL, "module shut down done");
+		POWER_OFF;
+		moduleFsmChange(MODULE_FSM_SHUTDOWN_WAIT);
+		break;
+	case MODULE_FSM_SHUTDOWN_WAIT:
+		if (++sysinfo.moduleFsmTick > 300)
+		{
+			moduleFsmChange(MODULE_FSM_SHUTDOWN_UP);
+		}
+		if ((sysinfo.moduleFsmTick % 10) == 0)
+			LogPrintf(DEBUG_ALL, "module shut down wait %ds...", sysinfo.moduleFsmTick / 10);
+		break;
+	case MODULE_FSM_SHUTDOWN_UP:
+		LogMessage(DEBUG_ALL, "module shut down up");
+	    moduleInit();
+	    sysinfo.moduleRstFlag = 1;
+	    portUartCfg(APPUSART0, 1, 57600, moduleRecvParser);
+	    POWER_ON;
+	    PWRKEY_HIGH;
+	    RSTKEY_HIGH;
+	    moduleState.gpsFileHandle = 1;
+	    moduleCtrl.scanMode = 0;
+	    socketDelAll();
+		moduleFsmChange(MODULE_FSM_OPEN_ING1);
+		break;
+	default:
+		moduleFsmChange(MODULE_FSM_CLOSE_DONE);
+		break;
+	}
 }
 
 /**************************************************
@@ -716,7 +933,7 @@ void netConnectTask(void)
                     if (moduleCtrl.atCount >= 2)
                     {
                         moduleCtrl.atCount = 0;
-                        modulePowerOn();
+                        moduleShutdownStartup();
                     }
                     else
                     {
@@ -997,6 +1214,7 @@ static void cgregParser(uint8_t *buf, uint16_t len)
                         case 4:
                             moduleState.cid = strtoul(restore + 1, NULL, 16);
                             LogPrintf(DEBUG_ALL, "CID=%s,0x%X", restore, moduleState.cid);
+                            sendModuleCmd(CEREG_CMD, "0");
                             break;
                     }
                     restore[0] = 0;
@@ -2400,7 +2618,7 @@ void moduleGetCsq(void)
 
 void moduleGetLbs(void)
 {
-    sendModuleCmd(CGREG_CMD, "?");
+	sendModuleCmd(CEREG_CMD, "2");
     sendModuleCmd(CEREG_CMD, "?");
 }
 /**************************************************
