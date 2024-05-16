@@ -917,6 +917,11 @@ void motionStateUpdate(motion_src_e src, motionState_e newState)
                 gpsRequestSet(GPS_REQUEST_ACC_CTL);
             }
         }
+        //Ã»ÍøÂçÊ±
+        if (isModeDone())
+        {
+			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+        }
         if (sysparam.bf)
         {
 			alarmRequestSet(ALARM_GUARD_REQUEST);
