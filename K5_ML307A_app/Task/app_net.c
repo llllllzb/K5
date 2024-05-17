@@ -865,15 +865,26 @@ void netRequestSet(void)
 
 void netRequestClear(void)
 {
-	sysinfo.netRequest = 0;
-	LogPrintf(DEBUG_ALL, "netRequestClear==>OK");
+	if (sysinfo.netRequest)
+	{
+		if (sysparam.MODE != MODE4)
+		{
+			gpsinfo_s newgps;
+			centralPointGet(&newgps);
+			updateHistoryGpsTime(&newgps);
+			protocolSend(NORMAL_LINK, PROTOCOL_12, &newgps);
+			jt808SendToServer(TERMINAL_POSITION,   &newgps);
+		}	
+		sysinfo.netRequest = 0;
+		LogPrintf(DEBUG_ALL, "netRequestClear==>OK");
+	}
 }
 
 /**************************************************
 @bref		初始化重新搜网时间
 @param
 @return
-@note	刚上电的时候用
+@note		刚上电的时候用
 **************************************************/
 
 void noNetTimeInit(void)

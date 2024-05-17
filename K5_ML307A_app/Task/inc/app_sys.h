@@ -113,7 +113,7 @@ typedef struct
 
 	uint8_t irqTick;
 	uint16_t mode4NoNetTick;
-	uint8_t netRequest;
+	uint8_t netRequest;	/* 该标志的作用就是 */
 
 	uint8_t mode4alarmDate;
     uint8_t mode4alarmHour;

@@ -59,11 +59,10 @@
 #define UART_RECV_BUFF_SIZE 			768
 #define DEBUG_BUFF_SIZE					256
 
-#define MODE_CHOOSE						0
-#define MODE_START						1
-#define MODE_RUNING						2
-#define MODE_STOP						3
-#define MODE_DONE						4
+#define MODE_START						0
+#define MODE_RUNING						1
+#define MODE_STOP						2
+#define MODE_DONE						3
 
 //GPS_UPLOAD_GAP_MAX 以下，gps常开，以上(包含GPS_UPLOAD_GAP_MAX),周期开启
 #define GPS_UPLOAD_GAP_MAX				60
@@ -208,6 +207,7 @@ void gpsRequestSet(uint32_t flag);
 void gpsRequestClear(uint32_t flag);
 uint32_t gpsRequestGet(uint32_t flag);
 void gpsTcpSendRequest(void);
+void centralPointGet(gpsinfo_s *dest);
 
 void motionClear(void);
 

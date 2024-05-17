@@ -418,7 +418,7 @@ static void hdGpsCfg(void)
 	hdGpsColdStart();
 	//hdGpsHotStart();
 	DelayMs(1);
-	//hdGpsGsvCtl(0);
+	hdGpsGsvCtl(0);
 	startTimer(10, hdGpsInjectLocation, 0);
 }
 
@@ -665,6 +665,18 @@ void centralPointClear(void)
 	LogPrintf(DEBUG_ALL, "%s==>OK", __FUNCTION__);
 }
 
+/**************************************************
+@bref		获取最后一次定位点
+@param
+@return
+@note
+**************************************************/
+
+void centralPointGet(gpsinfo_s *dest)
+{
+	tmos_memcpy(dest, &centralPoi.gpsinfo, sizeof(gpsinfo_s));
+	LogPrintf(DEBUG_ALL, "%s==>OK", __FUNCTION__);
+}
 
 /**************************************************
 @bref		上送一个gps位置
@@ -917,6 +929,11 @@ void motionStateUpdate(motion_src_e src, motionState_e newState)
                 gpsRequestSet(GPS_REQUEST_ACC_CTL);
             }
         }
+        //没网络时
+        if (isModeDone())
+        {
+			gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+        }        
         if (sysparam.bf)
         {
 			alarmRequestSet(ALARM_GUARD_REQUEST);
@@ -1331,11 +1348,17 @@ static void modeShutDownQuickly(void)
 {
     static uint16_t delaytick = 0;
     //存在一种情况是GPS在一开始就定位了，清除了wifi基站的标志位，而4G上线慢导致运行了30秒就关机了，因此要加上primaryServerIsReady判断
-    if (sysinfo.gpsRequest == 0 && sysinfo.alarmRequest == 0 && sysinfo.wifiExtendEvt == 0 && sysinfo.lbsRequest == 0 && sysinfo.netRequest == 0 && primaryServerIsReady())
+    if (sysinfo.gpsRequest == 0    && 
+    	sysinfo.alarmRequest == 0  && 
+    	sysinfo.wifiExtendEvt == 0 && 
+    	sysinfo.lbsRequest == 0 && 
+    	sysinfo.netRequest == 0 && 
+    	primaryServerIsReady())
     {
     	//sysparam.gpsuploadgap>=60时，由于gpsrequest==0会关闭kernal,导致一些以1s为时基的任务不计时，会导致gps上报不及时，acc状态无法切换等
     	//比如运动的情况下，由于没有GPS_REQUEST_ACC_CTL，这里会导致关闭kernal
-    	if ((sysparam.MODE == MODE21 || sysparam.MODE == MODE23) && getTerminalAccState() && sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX)
+    	if ((sysparam.MODE == MODE21 || sysparam.MODE == MODE23) && 
+    		getTerminalAccState() && sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX)
     	{
 			delaytick = 0;
     	}
@@ -2033,11 +2056,7 @@ static void sysAutoReq(void)
 	            }
 	            if (getTerminalAccState() == 0 && centralPoi.init)
 				{
-					gpsinfo_s newgps;
-					tmos_memcpy(&newgps, &centralPoi.gpsinfo, sizeof(gpsinfo_s));
-					updateHistoryGpsTime(&newgps);
-					protocolSend(NORMAL_LINK, PROTOCOL_12, &newgps);
-					jt808SendToServer(TERMINAL_POSITION,   &newgps);
+					netRequestSet();
 				}
 				else
 				{
@@ -2139,7 +2158,7 @@ uint8_t SysBatDetection(void)
 				}
 			}
 		}
-		else if (sysinfo.runFsm == MODE_START || sysinfo.runFsm == MODE_CHOOSE)
+		else if (sysinfo.runFsm == MODE_START)
 		{
 			modeTryToDone();
 		}
@@ -2203,9 +2222,6 @@ static void sysModeRunTask(void)
 	}
     switch (sysinfo.runFsm)
     {
-        case MODE_CHOOSE:
-            modeChoose();
-            break;
         case MODE_START:
             modeStart();
             break;

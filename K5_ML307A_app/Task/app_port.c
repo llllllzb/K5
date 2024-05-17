@@ -1003,6 +1003,7 @@ void portGsensorCtl(uint8_t onoff)
     {
         sysinfo.gsensorOnoff = 1;
         GSPWR_ON;
+		DelayMs(10);
         mir3da_init();
 
 		PWR_PeriphWakeUpCfg( ENABLE, RB_SLP_GPIO_WAKE, Long_Delay );

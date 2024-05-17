@@ -284,7 +284,7 @@ void privateServerConnTask(void)
                 if (privateServConn.loginCount >= 3)
                 {
                     privateServConn.loginCount = 0;
-                    moduleReset();
+                    //moduleReset();
                 }
             }
             break;
