@@ -1308,7 +1308,7 @@ void portGetRtcDateTime(uint16_t *year, uint8_t *month, uint8_t *date, uint8_t *
 	portGetRtcDateTime(&a, &b, &c, &d, &e, &f);
     sec1 = d * 3600 + e * 60 + f;
     sec2 = hour * 3600 + minute * 60 + second;
-    if ((year + 2000) != a || b != month || c != date || abs(sec1 - sec2) >= 60)
+    if ((year + 2000) != a || b != month || c != date || abs(sec1 - sec2) >= 10)
     {
 		datetime.year   = year + 2000;
 		datetime.month  = month;
