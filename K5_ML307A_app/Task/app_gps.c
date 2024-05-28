@@ -640,6 +640,16 @@ static uint8_t  gpsFilter(gpsinfo_s *gpsinfo)
     {
         return 0;
     }
+    if (sysparam.fixmode && gpsinfo->fixmode != 3)
+    {
+    	LogPrintf(DEBUG_GPS, "No 3D fixmode");
+		return 0;
+    }
+    if (gpsinfo->fixmode > sysparam.pdop)
+    {
+		LogPrintf(DEBUG_GPS, "No pdop");
+		return 0;
+    }
     if (gpsinfo->latitude == 0 || gpsinfo->longtitude == 0)
     {
         return 0;

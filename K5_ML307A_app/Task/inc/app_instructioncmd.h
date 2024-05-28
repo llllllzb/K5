@@ -55,6 +55,8 @@ typedef enum
     ADCCAL_INS,
     BATSEL_INS,
     MOTIONDET_INS,
+    PDOP_INS,
+    FIXMODE_INS,
 } INSTRUCTIONID;
 
 

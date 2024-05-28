@@ -53,6 +53,8 @@ const instruction_s insCmdTable[] =
     {ADCCAL_INS, "ADCCAL"},
     {BATSEL_INS, "BATSEL"},
     {MOTIONDET_INS, "MOTIONDET"},
+    {PDOP_INS, "PDOP"},
+    {FIXMODE_INS, "FIXMODE"},
 };
 
 static insMode_e mode123;
@@ -1473,6 +1475,33 @@ void doBatSelInstruction(ITEM *item, char *message)
 	}
 }
 
+void doPdopInstrucion(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Current podp filter is %.2f", sysparam.pdop);
+    }
+    else
+    {
+        sysparam.pdop = atof(item->item_data[1]);
+        paramSaveAll();
+        sprintf(message, "Update podp filter to %.2f", sysparam.pdop);
+    }
+}
+
+void doFixmodeInstrucion(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Fix mode filter is %s", sysparam.fixmode ? "Open" : "Close");
+    }
+    else
+    {
+        sysparam.fixmode = atoi(item->item_data[1]);
+        paramSaveAll();
+        sprintf(message, "%s fix mode filter", sysparam.fixmode ? "Open" : "Close");
+    }
+}
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1600,6 +1629,12 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case MOTIONDET_INS:
 			doMotionDetInstruction(item, message);
+        	break;
+        case PDOP_INS:
+			doPdopInstrucion(item, message);
+        	break;
+        case FIXMODE_INS:
+        	doFixmodeInstrucion(item, message);
         	break;
         default:
             if (mode == SMS_MODE)
