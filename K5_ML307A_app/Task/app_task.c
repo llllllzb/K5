@@ -14,6 +14,7 @@
 #include "app_server.h"
 #include "app_jt808.h"
 #include "app_central.h"
+#include "app_gpsfilter.h"
 
 #define SYS_LED1_ON       LED1_ON
 #define SYS_LED1_OFF      LED1_OFF
@@ -396,17 +397,36 @@ void gpsUartRead(uint8_t *msg, uint16_t len)
 static void hdGpsInjectLocation(void)
 {
 	int32_t lat, lon;
-	static uint32_t agpsTick;
 	lat = dynamicParam.saveLat * 10000000;
 	lon = dynamicParam.saveLon * 10000000;
 	gnss_inject_location(lat, lon, 0, 0);
 	LogPrintf(DEBUG_ALL, "gnss_inject_location==>lat:%d lon:%d", lat, lon);
-	if (agpsTick == 0 || (sysinfo.oneMinTick >= agpsTick))
-    {
-    	agpsTick = sysinfo.oneMinTick + 120;
-		agpsRequestSet();
-    }	
+	agpsRequestSet();
 }
+
+/**************************************************
+@bref		判断冷启动还是热启动
+@param
+@return
+@note
+**************************************************/
+
+static void hdGpsOpenMode(void)
+{
+	static uint32_t agpsTick;
+	//agps就要冷启动
+	if (agpsTick == 0 || (sysinfo.oneMinTick >= agpsTick))
+	{
+		agpsTick = sysinfo.oneMinTick + 120;
+		hdGpsColdStart();
+		startTimer(10, hdGpsInjectLocation, 0);
+	}
+	else//非agps就热启动
+	{
+		hdGpsHotStart();
+	}
+}
+
 /**************************************************
 @bref		华大gps配置
 @param
@@ -415,11 +435,8 @@ static void hdGpsInjectLocation(void)
 **************************************************/
 static void hdGpsCfg(void)
 {
-	hdGpsColdStart();
-	//hdGpsHotStart();
-	DelayMs(1);
 	hdGpsGsvCtl(0);
-	startTimer(10, hdGpsInjectLocation, 0);
+	startTimer(5, hdGpsOpenMode, 0);
 }
 
 /**************************************************
@@ -440,9 +457,9 @@ static void gpsOpen(void)
     gpsChangeFsmState(GPSWATISTATUS);
     gpsClearCurrentGPSInfo();
     ledStatusUpdate(SYSTEM_LED_GPSOK, 0);
-    moduleSleepCtl(0);
     LogMessage(DEBUG_ALL, "gpsOpen");
 }
+
 /**************************************************
 @bref		等待gps稳定
 @param
@@ -559,6 +576,7 @@ static void gpsRequestTask(void)
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
+                gf_init();
                 flag = 1;
             }
             break;
@@ -577,7 +595,7 @@ static void gpsRequestTask(void)
             {
                 ledStatusUpdate(SYSTEM_LED_GPSOK, 0);    
             }
-            if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 20)
+            if (sysinfo.gpsRequest == 0 || (sysinfo.sysTick - sysinfo.gpsUpdatetick) >= 15)
             {
             	if (sysinfo.gpsRequest == 0)
             	{
@@ -690,6 +708,7 @@ static void gpsUplodOnePointTask(void)
     gpsinfo_s *gpsinfo;
     static uint16_t runtick = 0;
     static uint8_t  uploadtick = 0;
+    uint8_t gps_static_timer = 0;
     //判断是否有请求该事件
     if (sysinfo.gpsOnoff == 0)
     {
@@ -703,12 +722,18 @@ static void gpsUplodOnePointTask(void)
         uploadtick = 0;
         return;
     }
+    if (getTerminalAccState())
+    	gps_static_timer = 12;
+    else
+    	gps_static_timer = sysparam.statictimer;
+    if (gps_static_timer == 0 || gps_static_timer > 255)
+    	gps_static_timer = 12;
     gpsinfo = getCurrentGPSInfo();
     runtick++;
     if (gpsinfo->fixstatus == 0)
     {
         uploadtick = 0;
-        if (runtick >= sysinfo.gpsuploadonepositiontime)
+        if (runtick >= 180)
         {
             runtick = 0;
             uploadtick = 0;
@@ -721,7 +746,8 @@ static void gpsUplodOnePointTask(void)
         return;
     }
     runtick = 0;
-	if (++uploadtick >= 10)
+    LogPrintf(DEBUG_ALL, "%s==>uploadtick:%d targe:%d", __FUNCTION__, uploadtick, gps_static_timer);
+	if (++uploadtick >= gps_static_timer)
 	{
 		if (sysinfo.flag123)
         {
@@ -2821,6 +2847,7 @@ void myTaskPreInit(void)
     portSleepEn();
 	ledStatusUpdate(SYSTEM_LED_RUN, 1);
 	noNetTimeInit();
+	gf_init();
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);

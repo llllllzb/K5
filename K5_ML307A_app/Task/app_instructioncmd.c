@@ -55,6 +55,7 @@ const instruction_s insCmdTable[] =
     {MOTIONDET_INS, "MOTIONDET"},
     {PDOP_INS, "PDOP"},
     {FIXMODE_INS, "FIXMODE"},
+    {STATICTIMER_INS, "STATICTIMER"},
 };
 
 static insMode_e mode123;
@@ -1503,6 +1504,21 @@ void doFixmodeInstrucion(ITEM *item, char *message)
     }
 }
 
+void doStaticTimerInstrucion(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Static timer is %d", sysparam.statictimer);
+    }
+    else
+    {
+        sysparam.statictimer = atoi(item->item_data[1]);
+        paramSaveAll();
+        sprintf(message, "Update static timer to %d", sysparam.statictimer);
+    }
+}
+
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1635,6 +1651,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case FIXMODE_INS:
         	doFixmodeInstrucion(item, message);
+        	break;
+        case STATICTIMER_INS:
+			doStaticTimerInstrucion(item, message);
         	break;
         default:
             if (mode == SMS_MODE)

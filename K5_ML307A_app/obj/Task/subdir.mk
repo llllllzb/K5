@@ -9,6 +9,7 @@ C_SRCS += \
 ../Task/app_atcmd.c \
 ../Task/app_db.c \
 ../Task/app_gps.c \
+../Task/app_gpsfilter.c \
 ../Task/app_instructioncmd.c \
 ../Task/app_jt808.c \
 ../Task/app_kernal.c \
@@ -27,6 +28,7 @@ OBJS += \
 ./Task/app_atcmd.o \
 ./Task/app_db.o \
 ./Task/app_gps.o \
+./Task/app_gpsfilter.o \
 ./Task/app_instructioncmd.o \
 ./Task/app_jt808.o \
 ./Task/app_kernal.o \
@@ -45,6 +47,7 @@ C_DEPS += \
 ./Task/app_atcmd.d \
 ./Task/app_db.d \
 ./Task/app_gps.d \
+./Task/app_gpsfilter.d \
 ./Task/app_instructioncmd.d \
 ./Task/app_jt808.d \
 ./Task/app_kernal.d \

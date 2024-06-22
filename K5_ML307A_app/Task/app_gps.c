@@ -9,6 +9,8 @@
 #include "app_jt808.h"
 #include "app_db.h"
 #include "app_server.h"
+#include "app_gpsfilter.h"
+
 #define PIA 3.1415926
 static gpsinfo_s gpsinfonow;
 static GPSFIFO gpsfifo;
@@ -721,6 +723,14 @@ static void addGpsInfo(gpsinfo_s *gpsinfo)
     }
     else
     {
+    	gf_gpsinfo_enter(gpsinfo);
+    	gf_avg_t *gps_avg = gf_get_gpsinfo_avg(); 
+    	if (gps_avg != NULL)
+    	{
+			gpsinfo->latitude   = (double)gps_avg->gf_lat_avg;
+			gpsinfo->longtitude = (double)gps_avg->gf_lng_avg;
+			gpsinfo->speed      = (double)gps_avg->gf_speed_avg;
+    	}
         memcpy(&gpsfifo.lastfixgpsinfo, gpsinfo, sizeof(gpsinfo_s));
     }
 

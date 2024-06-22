@@ -57,6 +57,7 @@ typedef enum
     MOTIONDET_INS,
     PDOP_INS,
     FIXMODE_INS,
+    STATICTIMER_INS,
 } INSTRUCTIONID;
 
 

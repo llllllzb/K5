@@ -128,6 +128,7 @@ void paramInit(void)
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
 		sysparam.pdop = 7.0;
     	sysparam.fixmode = 1;
+    	sysparam.statictimer = 150;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
