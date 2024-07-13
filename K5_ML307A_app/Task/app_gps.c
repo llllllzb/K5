@@ -723,14 +723,30 @@ static void addGpsInfo(gpsinfo_s *gpsinfo)
     }
     else
     {
-    	gf_gpsinfo_enter(gpsinfo);
-    	gf_avg_t *gps_avg = gf_get_gpsinfo_avg(); 
-    	if (gps_avg != NULL)
-    	{
-			gpsinfo->latitude   = (double)gps_avg->gf_lat_avg;
-			gpsinfo->longtitude = (double)gps_avg->gf_lng_avg;
-			gpsinfo->speed      = (double)gps_avg->gf_speed_avg;
-    	}
+#if defined(GF_TYPE_AVG_ENABLE)
+
+//    	gf_gpsinfo_enter(gpsinfo);
+//    	gf_avg_t *gps_avg = gf_get_gpsinfo_avg(); 
+//    	if (gps_avg != NULL)
+//    	{
+//			gpsinfo->latitude   = (double)gps_avg->gf_lat_avg;
+//			gpsinfo->longtitude = (double)gps_avg->gf_lng_avg;
+//			gpsinfo->speed      = (double)gps_avg->gf_speed_avg;
+//    	}
+#endif
+#if defined(GF_TYPE_AVG_ENABLE)
+
+		double lat_filted = 0;
+		double lng_filted = 0;
+		if (gf_kalman_filter_update(gpsinfo->latitude, gpsinfo->longtitude, 1.0))
+		{
+			gf_kalman_filter_read(&lat_filted,&lng_filted);
+			LogPrintf(DEBUG_ALL,"Kalman filter:lat=%f,lng=%f,lat_filted=%f,lng_filted=%f", gpsinfo->latitude, gpsinfo->longtitude,lat_filted,lng_filted);
+			gpsinfo->latitude	= lat_filted;
+			gpsinfo->longtitude = lng_filted;
+		}
+#endif
+
         memcpy(&gpsfifo.lastfixgpsinfo, gpsinfo, sizeof(gpsinfo_s));
     }
 

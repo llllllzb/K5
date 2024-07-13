@@ -56,6 +56,7 @@ const instruction_s insCmdTable[] =
     {PDOP_INS, "PDOP"},
     {FIXMODE_INS, "FIXMODE"},
     {STATICTIMER_INS, "STATICTIMER"},
+    {FILTERMODE_INS, "FILTERMODE"},
 };
 
 static insMode_e mode123;
@@ -1518,6 +1519,34 @@ void doStaticTimerInstrucion(ITEM *item, char *message)
     }
 }
 
+void doFilterModeInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+    	if (sysparam.filter_mode == 0)
+       		sprintf(message, "gps filter mode is disable");
+       	else if (sysparam.filter_mode == 1)
+       		sprintf(message, "gps filter mode is average");
+       	else if (sysparam.filter_mode == 2)
+       		sprintf(message, "gps filter mode is kalman");
+    }
+	else
+	{
+		sysparam.filter_mode = atoi(item->item_data[1]);
+		if (sysparam.filter_mode == 0)
+       		sprintf(message, "Disable filter mode");
+       	else if (sysparam.filter_mode == 1)
+       		sprintf(message, "Update gps filter mode to average");
+       	else if (sysparam.filter_mode == 2)
+       		sprintf(message, "Update gps filter mode to kalman");
+       	else 
+       	{
+			sysparam.filter_mode = 0;
+			sprintf(message, "Unknow gps filter mode,disable filter mode");
+       	}
+		paramSaveAll();
+	}
+}
 
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
@@ -1654,6 +1683,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case STATICTIMER_INS:
 			doStaticTimerInstrucion(item, message);
+        	break;
+        case FILTERMODE_INS:
+			doFilterModeInstruction(item, message);
         	break;
         default:
             if (mode == SMS_MODE)

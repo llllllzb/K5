@@ -18,14 +18,7 @@
 #define SLEEPMODULE			DTR_HIGH
 
 
-#define GPSSAVEFILE			"gpssave.bat"
-
-
-#define FILE_READ_SIZE		400
-
-
-
-#define MODULE_RX_BUFF_SIZE		1800
+#define MODULE_RX_BUFF_SIZE		1280
 
 typedef enum
 {

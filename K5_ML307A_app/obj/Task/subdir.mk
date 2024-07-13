@@ -21,7 +21,9 @@ C_SRCS += \
 ../Task/app_server.c \
 ../Task/app_socket.c \
 ../Task/app_sys.c \
-../Task/app_task.c 
+../Task/app_task.c \
+../Task/kalman.c \
+../Task/matrix.c 
 
 OBJS += \
 ./Task/aes.o \
@@ -40,7 +42,9 @@ OBJS += \
 ./Task/app_server.o \
 ./Task/app_socket.o \
 ./Task/app_sys.o \
-./Task/app_task.o 
+./Task/app_task.o \
+./Task/kalman.o \
+./Task/matrix.o 
 
 C_DEPS += \
 ./Task/aes.d \
@@ -59,7 +63,9 @@ C_DEPS += \
 ./Task/app_server.d \
 ./Task/app_socket.d \
 ./Task/app_sys.d \
-./Task/app_task.d 
+./Task/app_task.d \
+./Task/kalman.d \
+./Task/matrix.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

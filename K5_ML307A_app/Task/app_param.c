@@ -111,6 +111,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.bf = 0;
     sysparam.pdop = 7.0;
     sysparam.fixmode = 1;
+    sysparam.filter_mode = 2;
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -128,7 +129,8 @@ void paramInit(void)
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
 		sysparam.pdop = 7.0;
     	sysparam.fixmode = 1;
-    	sysparam.statictimer = 150;
+    	sysparam.statictimer = 10;
+    	sysparam.filter_mode = 2;
 		paramSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;

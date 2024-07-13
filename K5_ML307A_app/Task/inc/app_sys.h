@@ -122,6 +122,7 @@ typedef struct
     uint8_t lockTick;
 
 	uint16_t noNetTime;
+	uint8_t fixTime;
 } SystemInfoTypedef;
 
 extern SystemInfoTypedef sysinfo;

@@ -58,6 +58,7 @@ typedef enum
     PDOP_INS,
     FIXMODE_INS,
     STATICTIMER_INS,
+    FILTERMODE_INS,
 } INSTRUCTIONID;
 
 

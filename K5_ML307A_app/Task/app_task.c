@@ -576,7 +576,8 @@ static void gpsRequestTask(void)
             if (sysinfo.gpsRequest != 0)
             {
                 gpsOpen();
-                gf_init();
+                gf_avg_init();
+                gf_kalman_filter_create(1.0);
                 flag = 1;
             }
             break;
@@ -602,6 +603,16 @@ static void gpsRequestTask(void)
 					saveGpsHistory();
 					agpsRequestClear();
 					flag = 0;
+					//gps·Ç³£¿ªÔòµÈ´ý¾²Ö¹ÔÙÉ¾³ý¿¨¶ûÂüÂË²¨Æ÷
+					if (sysparam.gpsuploadgap >= GPS_UPLOAD_GAP_MAX) 
+					{
+						if (getTerminalAccState() == 0)
+							gf_kalman_filter_destroy();
+					}
+					else
+					{
+						gf_kalman_filter_destroy();
+					}
             	}
                 gpsClose();
             }
@@ -723,7 +734,7 @@ static void gpsUplodOnePointTask(void)
         return;
     }
     if (getTerminalAccState())
-    	gps_static_timer = 12;
+    	gps_static_timer = 10;
     else
     	gps_static_timer = sysparam.statictimer;
     if (gps_static_timer == 0 || gps_static_timer > 255)
@@ -2847,7 +2858,9 @@ void myTaskPreInit(void)
     portSleepEn();
 	ledStatusUpdate(SYSTEM_LED_RUN, 1);
 	noNetTimeInit();
-	gf_init();
+#if defined(GF_TYPE_AVG_ENABLE)
+	gf_avg_init();
+#endif
     volCheckRequestSet();
     createSystemTask(ledTask, 1);
     createSystemTask(outputNode, 2);
@@ -2959,6 +2972,5 @@ void myTaskInit(void)
     tmos_set_event(sysinfo.taskId, APP_TASK_RUN_EVENT);
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_POLLUART_EVENT, MS1_TO_SYSTEM_TIME(50));
     tmos_start_reload_task(sysinfo.taskId, APP_TASK_ONEMINUTE_EVENT, MS1_TO_SYSTEM_TIME(60000));
-
 }
 
