@@ -401,7 +401,6 @@ static void hdGpsInjectLocation(void)
 	lon = dynamicParam.saveLon * 10000000;
 	gnss_inject_location(lat, lon, 0, 0);
 	LogPrintf(DEBUG_ALL, "gnss_inject_location==>lat:%d lon:%d", lat, lon);
-	agpsRequestSet();
 }
 
 /**************************************************
@@ -419,7 +418,8 @@ static void hdGpsOpenMode(void)
 	{
 		agpsTick = sysinfo.oneMinTick + 120;
 		hdGpsColdStart();
-		startTimer(10, hdGpsInjectLocation, 0);
+		startTimer(5, hdGpsInjectLocation, 0);
+		agpsRequestSet();
 	}
 	else//非agps就热启动
 	{
@@ -475,15 +475,6 @@ static void gpsWait(void)
     {
         runTick = 0;
         gpsChangeFsmState(GPSOPENSTATUS);
-//		if (gpsRequestOtherGet(GPS_REQUEST_BLE))
-//		{
-//			if (sysinfo.sysTick - sysinfo.agpsTick >= 7200 || first == 0)
-//			{
-//				first = 1;
-//				sysinfo.agpsTick = sysinfo.sysTick;
-//				agpsRequestSet();
-//			}
-//		}
     }
 }
 
@@ -546,6 +537,30 @@ void saveGpsHistory(void)
         LogPrintf(DEBUG_ALL, "Save Latitude:%lf,Longtitude:%lf", dynamicParam.saveLat, dynamicParam.saveLon);
 		dynamicParamSaveAll();
     }
+}
+
+/* 把最后一个点放入发送缓冲区 */
+void getLastFixLocationFromFlash(void)
+{
+	gpsinfo_s *gpsinfo;
+	gpsinfo = getLastFixedGPSInfo();
+    tmos_memcpy(gpsinfo, &dynamicParam.lastGps, sizeof(gpsinfo_s));
+    LogPrintf(DEBUG_ALL, "Get last fix location, Latitude:%f, Longitude:%f", 
+    		dynamicParam.lastGps.latitude, dynamicParam.lastGps.longtitude);
+}
+
+void saveLastFixLocationToFlash(gpsinfo_s *lastgps)
+{
+	gpsinfo_s *gpsinfo;
+	gpsinfo = lastgps;
+	if (gpsinfo->fixstatus != 1)
+	{
+		return;
+	}
+	tmos_memcpy(&dynamicParam.lastGps, gpsinfo, sizeof(gpsinfo_s));
+	LogPrintf(DEBUG_ALL, "Save last fix location, Latitude:%f, Longitude:%f", 
+				dynamicParam.lastGps.latitude, dynamicParam.lastGps.longtitude);
+	dynamicParamSaveAll();
 }
 
 
@@ -674,10 +689,17 @@ static void gpsRequestTask(void)
 
 void centralPointInit(gpsinfo_s *gpsinfo)
 {
-	centralPoi.init = 1;
-	tmos_memcpy(&centralPoi.gpsinfo, gpsinfo, sizeof(gpsinfo_s));
-	LogPrintf(DEBUG_ALL, "%s==>lat:%.2f, lon:%.2f", __FUNCTION__,
-				centralPoi.gpsinfo.latitude, centralPoi.gpsinfo.longtitude);
+	if (gpsinfo->fixstatus == 1)
+	{
+		centralPoi.init = 1;
+		tmos_memcpy(&centralPoi.gpsinfo, gpsinfo, sizeof(gpsinfo_s));
+		LogPrintf(DEBUG_ALL, "%s==>lat:%.2f, lon:%.2f", __FUNCTION__,
+					centralPoi.gpsinfo.latitude, centralPoi.gpsinfo.longtitude);
+	}
+	else
+	{
+		LogPrintf(DEBUG_ALL, "%s==>error", __FUNCTION__);
+	}
 }
 
 /**************************************************
@@ -770,6 +792,7 @@ static void gpsUplodOnePointTask(void)
 	    if (getTerminalAccState() == 0 && centralPoi.init == 0)
 	    {
 			centralPointInit(getCurrentGPSInfo());
+			saveLastFixLocationToFlash(getCurrentGPSInfo());
 	    }
     }
 }
@@ -1780,10 +1803,15 @@ static void modeStart(void)
     if (sysinfo.mode4First == 0)
     {
 		sysinfo.mode4First = 1;
-//		lbsRequestSet(DEV_EXTEND_OF_MY);
-		wifiRequestSet(DEV_EXTEND_OF_MY);
-    	gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-    	netRequestSet();
+		
+		//如果第一次起来是静止的,则上报一次历史点
+		if (getTerminalAccState() == 0 && centralPoi.init == 1)
+	    	netRequestSet();
+	    else
+	    {
+    		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+    		wifiRequestSet(DEV_EXTEND_OF_MY);
+    	}
     }
     sysinfo.nonetTick = 0;
     switch (sysparam.MODE)
@@ -2421,6 +2449,15 @@ static void wifiRequestTask(void)
 		}
 		return;
 	}
+	else
+	{
+		if (tick++ >= 3)
+		{
+			tick = 0;
+			goto __WIFI;
+		}
+		return;
+	}
 __WIFI:
 	tick = 0;
 	sysinfo.wifiRequest = 0;
@@ -2855,6 +2892,7 @@ void myTaskPreInit(void)
     portDebugUartCfg(1);
     bleTryInit();
     socketListInit();
+    centralPointInit(&dynamicParam.lastGps);
     portSleepEn();
 	ledStatusUpdate(SYSTEM_LED_RUN, 1);
 	noNetTimeInit();

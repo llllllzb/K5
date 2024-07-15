@@ -112,6 +112,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.pdop = 7.0;
     sysparam.fixmode = 1;
     sysparam.filter_mode = 2;
+
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -127,11 +128,13 @@ void paramInit(void)
    	if (sysparam.otaParamFlag != OTA_PARAM_FLAG)
     {
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
-		sysparam.pdop = 7.0;
+		sysparam.pdop = 6.0;
     	sysparam.fixmode = 1;
-    	sysparam.statictimer = 10;
+    	sysparam.statictimer = 1;
     	sysparam.filter_mode = 2;
+    	tmos_memcpy(&dynamicParam.lastGps, 0, sizeof(gpsinfo_s));
 		paramSaveAll();
+		dynamicParamSaveAll();
     }
     sysinfo.lowvoltage = sysparam.lowvoltage / 10.0;
     dbInfoRead();

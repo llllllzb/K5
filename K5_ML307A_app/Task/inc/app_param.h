@@ -1,7 +1,7 @@
 #ifndef APP_EEPROM_H
 #define APP_EEPROM_H
 #include <stdint.h>
-
+#include "app_gps.h"
 #include "app_sys.h"
 
 /*
@@ -20,9 +20,9 @@
 #define APP_DYNAMIC_PARAM_ADDR	0x2400 //实际是0x00070000+APP_DYNAMIC_PARAM_ADDR
 #define APP_PARAM_FLAG          0x2B
 #define BOOT_PARAM_FLAG         0xB0
-#define OTA_PARAM_FLAG          0x33
+#define OTA_PARAM_FLAG          0x34
 
-#define EEPROM_VERSION									"K5_ML307A_HD_V2.4.74"
+#define EEPROM_VERSION									"K5_ML307A_HD_V2.5.0"
 
 
 #define JT808_PROTOCOL_TYPE			8
@@ -117,6 +117,7 @@ typedef struct
 	uint8_t fixmode;
 	uint8_t statictimer;
 	uint8_t filter_mode;
+
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/
@@ -136,6 +137,7 @@ typedef struct
     int32_t rtcOffset;
     double saveLat;
 	double saveLon;
+	gpsinfo_s lastGps;
 }dynamicParam_s;
 
 

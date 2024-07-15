@@ -638,7 +638,8 @@ void do123Instruction(ITEM *item, insMode_e mode, void *param)
     }
     sysinfo.flag123 = 1;
     save123InstructionId();
-	netRequestSet();
+    if (sysparam.MODE == MODE4)
+		netRequestSet();
 
 }
 

@@ -844,10 +844,12 @@ static void queryRecvBuffer(void)
 }
 
 /**************************************************
-@bref		网络请求设置
+@bref		网络请求设置/静止位置点上报
 @param
 @return
 @note
+这个既作为mode4的单次上报标志,也作为除mode4外的其他模式
+的静止上报标志
 **************************************************/
 
 void netRequestSet(void)
@@ -857,7 +859,7 @@ void netRequestSet(void)
 }
 
 /**************************************************
-@bref		网络请求清除
+@bref		网络请求清除/静止位置点上报清除
 @param
 @return
 @note
