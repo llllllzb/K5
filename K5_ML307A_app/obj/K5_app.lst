@@ -7302,7 +7302,7 @@ Disassembly of section .text:
    103ac:	17fd                	addi	a5,a5,-1
    103ae:	07c2                	slli	a5,a5,0x10
    103b0:	83c1                	srli	a5,a5,0x10
-   103b2:	03a00713          	li	a4,58
+   103b2:	03b00713          	li	a4,59
    103b6:	00f77563          	bgeu	a4,a5,103c0 <gpsUploadPointToServer+0x26>
    103ba:	8201a423          	sw	zero,-2008(gp) # 20002368 <tick.7208>
    103be:	8082                	ret
@@ -9222,7 +9222,7 @@ Disassembly of section .text:
    119b0:	d575                	beqz	a0,1199c <doTimerInstrucion+0x76>
    119b2:	1fff2717          	auipc	a4,0x1fff2
    119b6:	53475703          	lhu	a4,1332(a4) # 20003ee6 <sysparam+0x202>
-   119ba:	03b00793          	li	a5,59
+   119ba:	03c00793          	li	a5,60
    119be:	fce7efe3          	bltu	a5,a4,1199c <doTimerInstrucion+0x76>
    119c2:	4509                	li	a0,2
    119c4:	2360a0ef          	jal	ra,1bbfa <gpsRequestSet>
@@ -10335,7 +10335,7 @@ Disassembly of section .text:
    127a2:	366090ef          	jal	ra,1bb08 <getTerminalAccState>
    127a6:	cd11                	beqz	a0,127c2 <instructionParser+0x99a>
    127a8:	202a5783          	lhu	a5,514(s4)
-   127ac:	03a00713          	li	a4,58
+   127ac:	03b00713          	li	a4,59
    127b0:	17fd                	addi	a5,a5,-1
    127b2:	07c2                	slli	a5,a5,0x10
    127b4:	83c1                	srli	a5,a5,0x10
@@ -10386,7 +10386,7 @@ Disassembly of section .text:
    1284c:	1fff1797          	auipc	a5,0x1fff1
    12850:	49878793          	addi	a5,a5,1176 # 20003ce4 <sysparam>
    12854:	2027d783          	lhu	a5,514(a5)
-   12858:	03a00713          	li	a4,58
+   12858:	03b00713          	li	a4,59
    1285c:	17fd                	addi	a5,a5,-1
    1285e:	07c2                	slli	a5,a5,0x10
    12860:	83c1                	srli	a5,a5,0x10
@@ -10477,7 +10477,7 @@ Disassembly of section .text:
    1297c:	1fff1797          	auipc	a5,0x1fff1
    12980:	36878793          	addi	a5,a5,872 # 20003ce4 <sysparam>
    12984:	2027d783          	lhu	a5,514(a5)
-   12988:	03a00713          	li	a4,58
+   12988:	03b00713          	li	a4,59
    1298c:	17fd                	addi	a5,a5,-1
    1298e:	07c2                	slli	a5,a5,0x10
    12990:	83c1                	srli	a5,a5,0x10
@@ -23023,7 +23023,7 @@ Disassembly of section .text:
    1b9d0:	cb99                	beqz	a5,1b9e6 <modeShutDownQuickly+0x62>
    1b9d2:	1ffe8717          	auipc	a4,0x1ffe8
    1b9d6:	51475703          	lhu	a4,1300(a4) # 20003ee6 <sysparam+0x202>
-   1b9da:	03b00793          	li	a5,59
+   1b9da:	03c00793          	li	a5,60
    1b9de:	00e7f463          	bgeu	a5,a4,1b9e6 <modeShutDownQuickly+0x62>
    1b9e2:	88019323          	sh	zero,-1914(gp) # 200023c6 <delaytick.7348>
    1b9e6:	8861d783          	lhu	a5,-1914(gp) # 200023c6 <delaytick.7348>
@@ -23781,7 +23781,7 @@ Disassembly of section .text:
    1c250:	9abff0ef          	jal	ra,1bbfa <gpsRequestSet>
    1c254:	1ffe8717          	auipc	a4,0x1ffe8
    1c258:	c9275703          	lhu	a4,-878(a4) # 20003ee6 <sysparam+0x202>
-   1c25c:	03b00793          	li	a5,59
+   1c25c:	03c00793          	li	a5,60
    1c260:	00e7e563          	bltu	a5,a4,1c26a <motionStateUpdate+0xa4>
    1c264:	4509                	li	a0,2
    1c266:	995ff0ef          	jal	ra,1bbfa <gpsRequestSet>
@@ -24224,7 +24224,7 @@ Disassembly of section .text:
    1c792:	cbd1                	beqz	a5,1c826 <taskRunInSecond+0x166>
    1c794:	1ffe7717          	auipc	a4,0x1ffe7
    1c798:	75275703          	lhu	a4,1874(a4) # 20003ee6 <sysparam+0x202>
-   1c79c:	03b00793          	li	a5,59
+   1c79c:	03c00793          	li	a5,60
    1c7a0:	08e7f363          	bgeu	a5,a4,1c826 <taskRunInSecond+0x166>
    1c7a4:	8841d783          	lhu	a5,-1916(gp) # 200023c4 <autoTick.7319>
    1c7a8:	0785                	addi	a5,a5,1
@@ -24670,7 +24670,7 @@ Disassembly of section .text:
    1cd38:	880184a3          	sb	zero,-1911(gp) # 200023c9 <flag.7237>
    1cd3c:	1ffe7717          	auipc	a4,0x1ffe7
    1cd40:	1aa75703          	lhu	a4,426(a4) # 20003ee6 <sysparam+0x202>
-   1cd44:	03b00793          	li	a5,59
+   1cd44:	03c00793          	li	a5,60
    1cd48:	00e7f663          	bgeu	a5,a4,1cd54 <taskRunInSecond+0x694>
    1cd4c:	00f44783          	lbu	a5,15(s0)
    1cd50:	8b89                	andi	a5,a5,2
@@ -47967,7 +47967,7 @@ Disassembly of section .text:
    2cd6c:	fffe22b4 fffe2194 fffe21e8 fffe2200     ."...!...!..."..
    2cd7c:	fffe2246 fffe2268 fffe2280 fffe2298     F"..h"..."..."..
    2cd8c:	4d5f354b 3730334c 44485f41 2e32565f     K5_ML307A_HD_V2.
-   2cd9c:	00302e35 4e49545a 253a4f46 73253a73     5.0.ZTINFO:%s:%s
+   2cd9c:	00322e35 4e49545a 253a4f46 73253a73     5.2.ZTINFO:%s:%s
    2cdac:	0073253a 40800000 50535553 00444e45     :%s....@SUSPEND.
    2cdbc:	70737553 20646e65 206c6c61 6b736174     Suspend all task
    2cdcc:	00000000 55534552 0000454d 75736552     ....RESUME..Resu
@@ -48338,8 +48338,8 @@ Disassembly of section .text:
    2e3ec:	3d535047 736f6c43 00003b65 3d434341     GPS=Close;..ACC=
    2e3fc:	003b7325 4e474953 253d4c41 00003b64     %s;.SIGNAL=%d;..
    2e40c:	54544142 3d595245 003b7325 49474f4c     BATTERY=%s;.LOGI
-   2e41c:	73253d4e 0000003b 323a3631 36303a33     N=%s;...16:23:06
-   2e42c:	00000000 206c754a 32203331 00343230     ....Jul 13 2024.
+   2e41c:	73253d4e 0000003b 313a3531 35333a31     N=%s;...15:11:35
+   2e42c:	00000000 206c754a 32203232 00343230     ....Jul 22 2024.
    2e43c:	73726556 3a6e6f69 433b7325 69706d6f     Version:%s;Compi
    2e44c:	253a656c 73252073 0000003b 61647055     le:%s %s;...Upda
    2e45c:	6a206574 38303874 6d6f6420 206e6961     te jt808 domain 

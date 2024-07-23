@@ -65,7 +65,7 @@
 #define MODE_DONE						3
 
 //GPS_UPLOAD_GAP_MAX 以下，gps常开，以上(包含GPS_UPLOAD_GAP_MAX),周期开启
-#define GPS_UPLOAD_GAP_MAX				60
+#define GPS_UPLOAD_GAP_MAX				61	//K5修改：60s及以下gps常开 60及以上gps周期开启
 
 #define ACC_READ		0
 #define ACC_STATE_ON	1
