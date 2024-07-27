@@ -100,7 +100,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.ldrEn = 1;
     sysparam.tiltalm = 0;
     sysparam.gsdettime=15;
-    sysparam.gsValidCnt=5;
+    sysparam.gsValidCnt=3;
     sysparam.gsInvalidCnt=0;
     sysparam.hiddenServOnoff = 0;
     sysparam.debug = 0;
@@ -112,7 +112,7 @@ void paramDefaultInit(uint8_t level)
     sysparam.pdop = 7.0;
     sysparam.fixmode = 1;
     sysparam.filter_mode = 2;
-
+	sysparam.turnalg = 0;
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -130,8 +130,10 @@ void paramInit(void)
 		sysparam.otaParamFlag = OTA_PARAM_FLAG;
 		sysparam.pdop = 6.0;
     	sysparam.fixmode = 1;
-    	sysparam.statictimer = 1;
+    	sysparam.statictimer = 10;
     	sysparam.filter_mode = 2;
+    	sysparam.gsValidCnt = 3;
+    	sysparam.turnalg = 0;
     	tmos_memcpy(&dynamicParam.lastGps, 0, sizeof(gpsinfo_s));
 		paramSaveAll();
 		dynamicParamSaveAll();

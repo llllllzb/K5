@@ -906,7 +906,8 @@ void gpsUploadPointToServer(void)
         return;
     }
     tick++;
-    calculateTheGPSCornerPoint();
+    if (sysparam.turnalg)
+    	calculateTheGPSCornerPoint();
     if (tick >= sysparam.gpsuploadgap)
     {
         if (calculateDistanceOfPoint() == 1)

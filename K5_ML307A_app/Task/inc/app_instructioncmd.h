@@ -59,6 +59,7 @@ typedef enum
     FIXMODE_INS,
     STATICTIMER_INS,
     FILTERMODE_INS,
+    TURNALG_INS,
 } INSTRUCTIONID;
 
 

@@ -57,6 +57,7 @@ const instruction_s insCmdTable[] =
     {FIXMODE_INS, "FIXMODE"},
     {STATICTIMER_INS, "STATICTIMER"},
     {FILTERMODE_INS, "FILTERMODE"},
+    {TURNALG_INS, "TURNALG"},
 };
 
 static insMode_e mode123;
@@ -1549,6 +1550,20 @@ void doFilterModeInstruction(ITEM *item, char *message)
 	}
 }
 
+static void doTurnalgInstruction(ITEM *item, char *message)
+{
+	if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Turnalg is %s", sysparam.turnalg ? "enable" : "disable");
+    }
+    else
+    {
+        sysparam.turnalg = atoi(item->item_data[1]);
+        paramSaveAll();
+        sprintf(message, "%s turnalg", sysparam.turnalg ? "Enable" : "Disable");
+    }
+}
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1687,6 +1702,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         	break;
         case FILTERMODE_INS:
 			doFilterModeInstruction(item, message);
+        	break;
+        case TURNALG_INS:
+			doTurnalgInstruction(item, message);
         	break;
         default:
             if (mode == SMS_MODE)
