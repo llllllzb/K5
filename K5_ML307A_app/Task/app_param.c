@@ -81,8 +81,8 @@ void paramDefaultInit(uint8_t level)
         sysparam.agpsPort = 10189;
 
     }
-    strcpy(sysparam.Server, "112.74.130.160");
-    sysparam.ServerPort = 7700;
+//    strcpy(sysparam.Server, "112.74.130.160");
+//    sysparam.ServerPort = 7700;
     sysparam.gpsuploadgap = 60;
     sysparam.gapMinutes = 0;
     dynamicParam.runTime = 0;

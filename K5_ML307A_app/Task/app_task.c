@@ -1803,15 +1803,15 @@ static void modeStart(void)
     if (sysinfo.mode4First == 0)
     {
 		sysinfo.mode4First = 1;
+//		//如果第一次起来是静止的,则上报一次历史点
+//		if (getTerminalAccState() == 0 && centralPoi.init == 1)
+//	    	netRequestSet();
+//	    else
+//	    {
 		
-		//如果第一次起来是静止的,则上报一次历史点
-		if (getTerminalAccState() == 0 && centralPoi.init == 1)
-	    	netRequestSet();
-	    else
-	    {
     		gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
-    		wifiRequestSet(DEV_EXTEND_OF_MY);
-    	}
+//    		wifiRequestSet(DEV_EXTEND_OF_MY);
+//    	}
     }
     sysinfo.nonetTick = 0;
     switch (sysparam.MODE)
