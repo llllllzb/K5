@@ -109,10 +109,11 @@ void paramDefaultInit(uint8_t level)
     sysparam.mode4Alarm = 1200;
     sysparam.smsreply = 0;
     sysparam.bf = 0;
-    sysparam.pdop = 7.0;
+    sysparam.pdop = 6.0;
     sysparam.fixmode = 1;
     sysparam.filter_mode = 2;
 	sysparam.turnalg = 0;
+	sysparam.svid_number = 6;
     dynamicParamSaveAll();
     paramSaveAll();
 }
@@ -134,6 +135,7 @@ void paramInit(void)
     	sysparam.filter_mode = 2;
     	sysparam.gsValidCnt = 3;
     	sysparam.turnalg = 0;
+    	sysparam.svid_number = 6;
     	tmos_memcpy(&dynamicParam.lastGps, 0, sizeof(gpsinfo_s));
 		paramSaveAll();
 		dynamicParamSaveAll();

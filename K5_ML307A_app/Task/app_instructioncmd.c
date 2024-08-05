@@ -58,6 +58,7 @@ const instruction_s insCmdTable[] =
     {STATICTIMER_INS, "STATICTIMER"},
     {FILTERMODE_INS, "FILTERMODE"},
     {TURNALG_INS, "TURNALG"},
+    {SVIDFILTER_INS,"SVIDFILTER"},
 };
 
 static insMode_e mode123;
@@ -1564,6 +1565,24 @@ static void doTurnalgInstruction(ITEM *item, char *message)
     }
 }
 
+static void doSvidFilterInstruction(ITEM *item, char *message)
+{
+    if (item->item_data[1][0] == 0 || item->item_data[1][0] == '?')
+    {
+        sprintf(message, "Svidfilter number:%d", sysparam.svid_number);
+    }
+    else
+    {
+        sysparam.svid_number = atoi(item->item_data[1]);
+        if (sysparam.svid_number <= 0)
+        {
+            sysparam.svid_number = 1;
+        }
+        paramSaveAll();
+        sprintf(message, "Svidfilter number:%d", sysparam.svid_number);
+    }
+}
+
 /*--------------------------------------------------------------------------------------*/
 static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param)
 {
@@ -1706,6 +1725,9 @@ static void doinstruction(int16_t cmdid, ITEM *item, insMode_e mode, void *param
         case TURNALG_INS:
 			doTurnalgInstruction(item, message);
         	break;
+        case SVIDFILTER_INS:
+            doSvidFilterInstruction(item, message);
+            break;
         default:
             if (mode == SMS_MODE)
             {

@@ -435,7 +435,7 @@ static void hdGpsOpenMode(void)
 **************************************************/
 static void hdGpsCfg(void)
 {
-	hdGpsGsvCtl(0);
+	hdGpsGsvCtl(1);
 	startTimer(5, hdGpsOpenMode, 0);
 }
 

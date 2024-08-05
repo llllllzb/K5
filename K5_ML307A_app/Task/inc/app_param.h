@@ -118,6 +118,7 @@ typedef struct
 	uint8_t statictimer;
 	uint8_t filter_mode;
 	uint8_t turnalg;
+	uint8_t svid_number;
 } systemParam_s;
 
 /*存在EEPROM里的动态参数*/

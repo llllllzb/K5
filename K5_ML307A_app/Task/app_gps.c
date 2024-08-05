@@ -647,10 +647,15 @@ static uint8_t  gpsFilter(gpsinfo_s *gpsinfo)
     	LogPrintf(DEBUG_GPS, "No 3D fixmode");
 		return 0;
     }
-    if (gpsinfo->fixmode > sysparam.pdop)
+    if (gpsinfo->pdop > sysparam.pdop)
     {
-		LogPrintf(DEBUG_GPS, "No pdop");
+		LogPrintf(DEBUG_GPS, "pdop below the mark");
 		return 0;
+    }
+    if (gpsinfo->used_star < sysparam.svid_number)
+    {
+        LogPrintf(DEBUG_GPS, "used_star below the mark");
+        return 0;
     }
     if (gpsinfo->latitude == 0 || gpsinfo->longtitude == 0)
     {
