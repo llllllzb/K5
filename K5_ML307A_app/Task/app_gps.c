@@ -775,6 +775,7 @@ gpsinfo_s *getCurrentGPSInfo(void)
 
 gpsinfo_s *getLastFixedGPSInfo(void)
 {
+    LogPrintf(DEBUG_ALL,"%d-%d-%d",gpsfifo.lastfixgpsinfo.datetime.hour,gpsfifo.lastfixgpsinfo.datetime.minute,gpsfifo.lastfixgpsinfo.datetime.second);
     return &gpsfifo.lastfixgpsinfo;
 }
 

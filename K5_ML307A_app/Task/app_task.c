@@ -435,7 +435,7 @@ static void hdGpsOpenMode(void)
 **************************************************/
 static void hdGpsCfg(void)
 {
-	hdGpsGsvCtl(1);
+	hdGpsGsvCtl(0);
 	startTimer(5, hdGpsOpenMode, 0);
 }
 
@@ -677,7 +677,6 @@ static void gpsRequestTask(void)
         gpsInvalidFlag = 0;
         gpsInvalidFlagTick = 0;
     }
-
 }
 
 /**************************************************
@@ -980,6 +979,7 @@ void motionStateUpdate(motion_src_e src, motionState_e newState)
 
     if (newState)
     {
+        LogPrintf(DEBUG_ALL, "%s(%d) acc off -> acc on",__FUNCTION__,__LINE__);
         netResetCsqSearch();
         if (sysparam.gpsuploadgap != 0)
         {
@@ -1004,21 +1004,28 @@ void motionStateUpdate(motion_src_e src, motionState_e newState)
     }
     else
     {
+        LogPrintf(DEBUG_ALL, "%s(%d) acc on -> acc off",__FUNCTION__,__LINE__);
         if (sysparam.gpsuploadgap != 0)
         {
-            gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
+            LogPrintf(DEBUG_ALL, "%s(%d)",__FUNCTION__,__LINE__);
+//            gpsRequestSet(GPS_REQUEST_UPLOAD_ONE);
             gpsRequestClear(GPS_REQUEST_ACC_CTL);
         }
-        
         terminalAccoff();
         updateRTCtimeRequest();
     }
     if (primaryServerIsReady())
     {
+        LogPrintf(DEBUG_ALL, "%s(%d)",__FUNCTION__,__LINE__);
         protocolInfoResiter(getBatteryLevel(), sysinfo.outsidevoltage > 5.0 ? sysinfo.outsidevoltage : sysinfo.insidevoltage,
                             dynamicParam.startUpCnt, dynamicParam.runTime);
         protocolSend(NORMAL_LINK, PROTOCOL_13, NULL);
-        jt808SendToServer(TERMINAL_POSITION, getLastFixedGPSInfo());
+        if(!newState)
+        {
+            jt808SendToServer(TERMINAL_POSITION, getLastFixedGPSInfo());
+            protocolSend(NORMAL_LINK, PROTOCOL_12, getLastFixedGPSInfo());
+        }
+
     }
 }
 
@@ -1152,11 +1159,11 @@ static void motionCheckTask(void)
 	}
     if (sysparam.MODE == MODE21 || sysparam.MODE == MODE23)
     {
-        staticTime = 180;
+        staticTime = 35;
     }
     else
     {
-        staticTime = 180;
+        staticTime = 35;
     }
 
 
@@ -2121,6 +2128,7 @@ static void sysAutoReq(void)
 	            }
 	            if (getTerminalAccState() == 0 && centralPoi.init)
 				{
+	                LogPrintf(DEBUG_ALL, "%s(%d)",__FUNCTION__,__LINE__);
 					netRequestSet();
 				}
 				else

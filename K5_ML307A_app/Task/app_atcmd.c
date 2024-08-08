@@ -201,7 +201,7 @@ static void atCmdNmeaParser(uint8_t *buf, uint16_t len)
     char buff[80];
     if (my_strstr((char *)buf, "ON", len))
     {
-        hdGpsGsvCtl(0);
+        hdGpsGsvCtl(1);
         LogMessage(DEBUG_FACTORY, "NMEA ON OK");
         sysinfo.nmeaOutPutCtl = 1;
         gpsRequestSet(GPS_REQUEST_DEBUG);
